@@ -1,0 +1,279 @@
+
+{% extends 'members/base.html' %}
+
+{% block breadcrumb %}
+<li><a href="{% url 'dashboard' %}" class="hover:text-gray-700"><i class="fas fa-home"></i></a></li>
+<li class="text-gray-400">/</li>
+<li><a href="{% url 'finance:dashboard' %}" class="hover:text-gray-700">Finance</a></li>
+<li class="text-gray-400">/</li>
+<li><a href="{% url 'finance:transaction_list' %}" class="hover:text-gray-700">Transactions</a></li>
+<li class="text-gray-400">/</li>
+<li class="text-gray-900">{% if transaction %}Modifier{% else %}Nouvelle{% endif %}</li>
+{% endblock %}
+
+{% block content %}
+
+<form method="post" class="space-y-6">
+    {% csrf_token %}
+    
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Colonne principale -->
+        <div class="lg:col-span-2 space-y-6">
+            
+            <!-- Informations de base -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4">
+                    <h3 class="text-lg font-semibold text-white">Informations de la Transaction</h3>
+                </div>
+                <div class="p-6 space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Date <span class="text-red-500">*</span>
+                            </label>
+                            {{ form.date }}
+                            {% if form.date.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.date.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Type de Transaction <span class="text-red-500">*</span>
+                            </label>
+                            {{ form.transaction_type }}
+                            {% if form.transaction_type.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.transaction_type.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Catégorie <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.category }}
+                        {% if form.category.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.category.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Montant <span class="text-red-500">*</span>
+                            </label>
+                            {{ form.amount }}
+                            {% if form.amount.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.amount.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Devise <span class="text-red-500">*</span>
+                            </label>
+                            {{ form.currency }}
+                            {% if form.currency.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.currency.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Mode de Paiement <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.payment_method }}
+                        {% if form.payment_method.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.payment_method.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Numéro de Référence
+                        </label>
+                        {{ form.reference_number }}
+                        {% if form.reference_number.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.reference_number.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Description
+                        </label>
+                        {{ form.description }}
+                        {% if form.description.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.description.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Contributeur -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="bg-gradient-to-r from-green-600 to-teal-600 px-6 py-4">
+                    <h3 class="text-lg font-semibold text-white">Contributeur</h3>
+                </div>
+                <div class="p-6 space-y-4">
+                    <div class="flex items-center">
+                        {{ form.is_anonymous }}
+                        <label for="{{ form.is_anonymous.id_for_label }}" class="ml-2 text-sm text-gray-700">
+                            Transaction Anonyme
+                        </label>
+                    </div>
+                    
+                    <div id="contributor-fields">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Membre
+                            </label>
+                            {{ form.member }}
+                            {% if form.member.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.member.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mt-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Famille
+                            </label>
+                            {{ form.family }}
+                            {% if form.family.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.family.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mt-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Groupe
+                            </label>
+                            {{ form.group }}
+                            {% if form.group.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.group.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
+                        <p class="text-sm text-blue-800">
+                            <i class="fas fa-info-circle mr-2"></i>
+                            Sélectionnez un membre, une famille ou un groupe, ou cochez "Transaction Anonyme"
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Colonne latérale -->
+        <div class="space-y-6">
+            
+            <!-- Résumé -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="bg-gradient-to-r from-yellow-600 to-orange-600 px-6 py-4">
+                    <h3 class="text-lg font-semibold text-white">Résumé</h3>
+                </div>
+                <div class="p-6 space-y-3">
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-600">Statut</span>
+                        {% if transaction and transaction.is_validated %}
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            <i class="fas fa-check-circle mr-1"></i> Validée
+                        </span>
+                        {% else %}
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                            <i class="fas fa-clock mr-1"></i> En attente
+                        </span>
+                        {% endif %}
+                    </div>
+                    
+                    {% if transaction %}
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-600">Transaction ID</span>
+                        <span class="text-sm font-mono font-semibold text-indigo-600">{{ transaction.transaction_id }}</span>
+                    </div>
+                    
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-600">Créée par</span>
+                        <span class="text-sm text-gray-900">{{ transaction.created_by.get_full_name }}</span>
+                    </div>
+                    
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-600">Créée le</span>
+                        <span class="text-sm text-gray-900">{{ transaction.created_at|date:"d/m/Y H:i" }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Actions -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="p-6 space-y-3">
+                    <button type="submit" 
+                            class="w-full flex justify-center items-center px-4 py-3 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700">
+                        <i class="fas fa-save mr-2"></i>
+                        {% if transaction %}Modifier{% else %}Enregistrer{% endif %}
+                    </button>
+                    
+                    {% if not transaction %}
+                    <label class="flex items-center justify-center">
+                        <input type="checkbox" name="generate_receipt" value="1" 
+                               class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 mr-2">
+                        <span class="text-sm text-gray-700">Générer le reçu automatiquement</span>
+                    </label>
+                    {% endif %}
+                    
+                    <a href="{% url 'finance:transaction_list' %}" 
+                       class="w-full flex justify-center items-center px-4 py-3 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                        <i class="fas fa-times mr-2"></i>
+                        Annuler
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Aide -->
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h4 class="text-sm font-semibold text-blue-900 mb-2">
+                    <i class="fas fa-question-circle mr-2"></i>
+                    Besoin d'aide ?
+                </h4>
+                <ul class="text-xs text-blue-800 space-y-1">
+                    <li>• Tous les champs marqués d'un * sont obligatoires</li>
+                    <li>• Le montant doit être positif</li>
+                    <li>• Les transactions seront validées par un administrateur</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</form>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Toggle contributor fields based on anonymous checkbox
+    const anonymousCheckbox = document.getElementById('{{ form.is_anonymous.id_for_label }}');
+    const contributorFields = document.getElementById('contributor-fields');
+    
+    if (anonymousCheckbox) {
+        anonymousCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                contributorFields.style.opacity = '0.5';
+                contributorFields.style.pointerEvents = 'none';
+            } else {
+                contributorFields.style.opacity = '1';
+                contributorFields.style.pointerEvents = 'auto';
+            }
+        });
+        
+        // Initial state
+        if (anonymousCheckbox.checked) {
+            contributorFields.style.opacity = '0.5';
+            contributorFields.style.pointerEvents = 'none';
+        }
+    }
+</script>
+{% endblock %}

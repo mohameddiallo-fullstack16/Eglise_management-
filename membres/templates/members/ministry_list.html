@@ -1,0 +1,143 @@
+{% extends 'members/base.html' %}
+
+{% block breadcrumb %}
+<li><a href="{% url 'dashboard' %}" class="hover:text-gray-700"><i class="fas fa-home"></i></a></li>
+<li class="text-gray-400">/</li>
+<li><a href="{% url 'membres:list' %}" class="hover:text-gray-700">Membres</a></li>
+<li class="text-gray-400">/</li>
+<li class="text-gray-900">Ministères</li>
+{% endblock %}
+
+{% block page_actions %}
+<a href="{% url 'membres:ministry_add' %}" 
+   class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700">
+    <i class="fas fa-plus mr-2"></i>
+    Ajouter un Ministère
+</a>
+{% endblock %}
+
+{% block content %}
+
+<!-- Statistiques -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600">Total Ministères</p>
+                <p class="text-3xl font-bold text-gray-900 mt-2">{{ ministries.count }}</p>
+            </div>
+            <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+                <i class="fas fa-hands-praying text-white text-2xl"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600">Total Membres</p>
+                <p class="text-3xl font-bold text-gray-900 mt-2">{{ total_ministry_members }}</p>
+            </div>
+            <div class="w-14 h-14 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center">
+                <i class="fas fa-users text-white text-2xl"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600">Plus Grand Ministère</p>
+                <p class="text-xl font-bold text-gray-900 mt-2">{{ largest_ministry.name|truncatewords:3 }}</p>
+                <p class="text-xs text-gray-500 mt-1">{{ largest_ministry.members.count }} membres</p>
+            </div>
+            <div class="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center">
+                <i class="fas fa-star text-white text-2xl"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600">Responsables</p>
+                <p class="text-3xl font-bold text-gray-900 mt-2">{{ ministries_with_leaders }}</p>
+            </div>
+            <div class="w-14 h-14 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl flex items-center justify-center">
+                <i class="fas fa-user-tie text-white text-2xl"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Grille des ministères -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for ministry in ministries %}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-shadow">
+        <div class="bg-gradient-to-r from-blue-600 to-cyan-600 px-6 py-8 text-center">
+            <div class="w-16 h-16 mx-auto bg-white/20 rounded-full flex items-center justify-center mb-4">
+                <i class="fas fa-hands-praying text-white text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-bold text-white">{{ ministry.name }}</h3>
+        </div>
+        
+        <div class="p-6">
+            {% if ministry.description %}
+            <p class="text-sm text-gray-600 mb-4 line-clamp-2">{{ ministry.description }}</p>
+            {% else %}
+            <p class="text-sm text-gray-400 mb-4 italic">Aucune description</p>
+            {% endif %}
+            
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center space-x-2">
+                    <i class="fas fa-users text-gray-400"></i>
+                    <span class="text-sm font-medium text-gray-700">{{ ministry.members.count }} membre{{ ministry.members.count|pluralize }}</span>
+                </div>
+            </div>
+            
+            {% if ministry.leader %}
+            <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg mb-4">
+                <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                    {{ ministry.leader.first_name.0 }}{{ ministry.leader.last_name.0 }}
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500">Responsable</p>
+                    <p class="text-sm font-semibold text-gray-900">{{ ministry.leader.get_full_name }}</p>
+                </div>
+            </div>
+            {% else %}
+            <div class="p-3 bg-yellow-50 border border-yellow-200 rounded-lg mb-4">
+                <p class="text-xs text-yellow-800">
+                    <i class="fas fa-exclamation-triangle mr-1"></i>
+                    Aucun responsable assigné
+                </p>
+            </div>
+            {% endif %}
+            
+            
+            <div class="flex space-x-2 mt-2">
+                <a href="{% url 'membres:ministry_edit' ministry.id %}" 
+                class="flex-1 flex items-center justify-center px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                    <i class="fas fa-edit mr-2"></i> Modifier
+                </a>
+                <a href="{% url 'membres:ministry_delete' ministry.id %}" 
+                class="flex-1 flex items-center justify-center px-3 py-2 border border-red-600 text-red-600 rounded-lg text-sm font-medium hover:bg-red-50">
+                    <i class="fas fa-trash mr-2"></i> Supprimer
+                </a>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-span-3 text-center py-12">
+        <i class="fas fa-hands-praying text-gray-300 text-6xl mb-4"></i>
+        <p class="text-gray-500 text-lg">Aucun ministère trouvé</p>
+        <a href="{% url 'membres:ministry_add' %}" 
+           class="inline-flex items-center px-4 py-2 mt-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700">
+            <i class="fas fa-plus mr-2"></i>
+            Créer le premier ministère
+        </a>
+    </div>
+    {% endfor %}
+</div>
+
+{% endblock %}

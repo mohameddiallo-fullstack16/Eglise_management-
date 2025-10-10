@@ -1,0 +1,217 @@
+
+
+{% block breadcrumb %}
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+<li><a href="{% url 'dashboard' %}" class="hover:text-gray-700"><i class="fas fa-home"></i></a></li>
+<li class="text-gray-400">/</li>
+<li class="text-gray-900">Mon Profil</li>
+{% endblock %}
+
+{% block page_actions %}
+<a href="{% url 'accounts:change_password' %}" 
+   class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+    <i class="fas fa-key mr-2"></i>
+    Changer le mot de passe
+</a>
+{% endblock %}
+
+{% block content %}
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    
+    <!-- Colonne principale -->
+    <div class="lg:col-span-2">
+        
+        <!-- Formulaire de profil -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4">
+                <h3 class="text-lg font-semibold text-white">Informations du Profil</h3>
+            </div>
+            
+            <form method="post" class="p-6 space-y-6">
+                {% csrf_token %}
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Prénom <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" 
+                               name="first_name" 
+                               value="{{ user.first_name }}"
+                               required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Nom <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" 
+                               name="last_name" 
+                               value="{{ user.last_name }}"
+                               required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent">
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Nom d'utilisateur <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" 
+                           name="username" 
+                           value="{{ user.username }}"
+                           required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Email <span class="text-red-500">*</span>
+                    </label>
+                    <input type="email" 
+                           name="email" 
+                           value="{{ user.email }}"
+                           required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent">
+                </div>
+                <div class="flex justify-end space-x-3">
+                    <!-- Bouton retour -->
+                    <a href="{% url 'accounts:logout' %}" 
+                    class="inline-flex items-center px-6 py-3 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-100 transition-colors">
+                        <i class="fas fa-arrow-left mr-2"></i>
+                        Retour à la connexion
+                    </a>
+
+                    <!-- Bouton enregistrer -->
+                    <button type="submit" 
+                            class="inline-flex items-center px-6 py-3 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 transition-colors">
+                        <i class="fas fa-save mr-2"></i>
+                        Enregistrer les modifications
+                    </button>
+                </div>
+
+            </form>
+        </div>
+        
+        <!-- Activité récente -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mt-6">
+            <div class="px-6 py-4 border-b border-gray-100">
+                <h3 class="text-lg font-semibold text-gray-900">Activité Récente</h3>
+            </div>
+            <div class="p-6">
+                <div class="space-y-4">
+                    <div class="flex items-start space-x-3 p-3 rounded-lg bg-gray-50">
+                        <div class="flex-shrink-0">
+                            <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                                <i class="fas fa-check text-green-600"></i>
+                            </div>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-sm font-medium text-gray-900">Connexion réussie</p>
+                            <p class="text-xs text-gray-500 mt-1">{{ user.last_login|date:"d/m/Y à H:i" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Colonne latérale -->
+    <div class="space-y-6">
+        
+        <!-- Carte utilisateur -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-12 text-center">
+                <div class="w-24 h-24 mx-auto bg-white rounded-full flex items-center justify-center text-indigo-600 text-3xl font-bold mb-4 shadow-lg">
+                    {{ user.first_name.0 }}{{ user.last_name.0 }}
+                </div>
+                <h2 class="text-xl font-bold text-white">{{ user.get_full_name }}</h2>
+                <p class="text-indigo-200 text-sm mt-1">@{{ user.username }}</p>
+            </div>
+            
+            <div class="p-6 space-y-4">
+                <div class="flex items-center text-sm">
+                    <i class="fas fa-envelope text-gray-400 w-6"></i>
+                    <span class="text-gray-600">{{ user.email }}</span>
+                </div>
+                
+                <div class="flex items-center text-sm">
+                    <i class="fas fa-shield-alt text-gray-400 w-6"></i>
+                    <span class="text-gray-600">{{ user.get_role_display }}</span>
+                </div>
+                
+                <div class="flex items-center text-sm">
+                    <i class="fas fa-calendar text-gray-400 w-6"></i>
+                    <span class="text-gray-600">Membre depuis {{ user.created_at|date:"d/m/Y" }}</span>
+                </div>
+                
+                <div class="flex items-center text-sm">
+                    <i class="fas fa-clock text-gray-400 w-6"></i>
+                    <span class="text-gray-600">Dernière connexion: {{ user.last_login|date:"d/m/Y" }}</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Statistiques -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-100">
+                <h3 class="text-lg font-semibold text-gray-900">Mes Statistiques</h3>
+            </div>
+            <div class="p-6 space-y-4">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-600">Rôle</span>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                        {{ user.get_role_display }}
+                    </span>
+                </div>
+                
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-600">Statut</span>
+                    {% if user.is_active %}
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        <i class="fas fa-check-circle mr-1"></i> Actif
+                    </span>
+                    {% else %}
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                        <i class="fas fa-times-circle mr-1"></i> Inactif
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Actions rapides -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-100">
+                <h3 class="text-lg font-semibold text-gray-900">Actions Rapides</h3>
+            </div>
+            <div class="p-6 space-y-2">
+                <a href="{% url 'accounts:change_password' %}" 
+                   class="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                    <span class="text-sm text-gray-700">Changer le mot de passe</span>
+                    <i class="fas fa-chevron-right text-gray-400"></i>
+                </a>
+                
+                {% if user.has_member_management_access %}
+                <a href="{% url 'membres:list' %}" 
+                   class="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                    <span class="text-sm text-gray-700">Gérer les membres</span>
+                    <i class="fas fa-chevron-right text-gray-400"></i>
+                </a>
+                {% endif %}
+                
+                {% if user.has_finance_access %}
+                <a href="{% url 'finance:dashboard' %}" 
+                   class="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                    <span class="text-sm text-gray-700">Tableau de bord financier</span>
+                    <i class="fas fa-chevron-right text-gray-400"></i>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

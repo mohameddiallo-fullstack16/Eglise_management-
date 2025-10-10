@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="fr" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ title }}{% endblock %} - Gestion Église</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+    
+    <style>[x-cloak] { display: none !important; }</style>
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body class="h-full bg-gray-50 font-sans" x-data="{ sidebarOpen: true, mobileMenuOpen: false }">
+  {% if messages %}
+    <div class="max-w-2xl mx-auto mt-4">
+        {% for message in messages %}
+        <div class="mb-2 px-4 py-2 rounded-lg
+            {% if message.tags == 'success' %}bg-green-100 text-green-800
+            {% elif message.tags == 'error' %}bg-red-100 text-red-800
+            {% else %}bg-gray-100 text-gray-800{% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+ {% endif %}  
+    {% if user.is_authenticated %}
+    
+    <!-- ========================================== -->
+    <!-- LAYOUT AUTHENTIFIÉ (Dashboard) -->
+    <!-- ========================================== -->
+    
+    <!-- Sidebar -->
+    <div x-show="sidebarOpen || mobileMenuOpen" 
+         x-transition
+         class="fixed inset-y-0 left-0 z-50 bg-gradient-to-b from-slate-900 to-slate-800 shadow-2xl lg:translate-x-0"
+         :class="sidebarOpen && !mobileMenuOpen ? 'w-72' : 'w-20'">
+        
+        <!-- Header Sidebar -->
+        <div class="flex items-center justify-between h-16 px-6 border-b border-slate-700">
+            <div class="flex items-center space-x-3" x-show="sidebarOpen || mobileMenuOpen">
+                <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-church text-white text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-white font-bold">Église App</h3>
+                    <p class="text-slate-400 text-xs">{{ user.get_role_display }}</p>
+                </div>
+            </div>
+            <button @click="sidebarOpen = !sidebarOpen" class="hidden lg:block text-slate-400 hover:text-white">
+                <i class="fas fa-bars"></i>
+            </button>
+            <button @click="mobileMenuOpen = false; sidebarOpen = false" class="lg:hidden text-slate-400 hover:text-white p-1">
+                <i class="fas fa-times text-lg"></i>
+            </button>
+        </div>
+        
+        <!-- Menu Navigation -->
+        <nav class="flex-1 px-4 py-6 overflow-y-auto">
+            
+            <!-- Dashboard -->
+            <a href="{% url 'dashboard' %}" class="flex items-center px-4 py-3 mb-2 text-slate-300 hover:bg-slate-700/50 hover:text-white rounded-lg transition {% if 'dashboard' in request.path %}bg-indigo-600 text-white{% endif %}">
+                <i class="fas fa-home w-6"></i>
+                <span class="ml-3" x-show="sidebarOpen || mobileMenuOpen">Tableau de Bord</span>
+            </a>
+            
+            <!-- Menu Administrateur -->
+        {% if request.user.has_membres_management_access %}          
+        <p class="px-4 text-xs font-semibold text-slate-500 uppercase mb-2 mt-4" x-show="sidebarOpen || mobileMenuOpen">Administration</p>
+            
+            <a href="{% url 'membres:list' %}" class="flex items-center px-4 py-3 mb-2 text-slate-300 hover:bg-slate-700/50 hover:text-white rounded-lg transition {% if 'membres/membre_list' in request.path %}bg-indigo-600 text-white{% endif %}">
+                <i class="fas fa-users w-6"></i>
+                <span class="ml-3" x-show="sidebarOpen || mobileMenuOpen">Membres</span>
+            </a>
+            
+            <a href="{% url 'finance:dashboard' %}" class="flex items-center px-4 py-3 mb-2 text-slate-300 hover:bg-slate-700/50 hover:text-white rounded-lg transition {% if 'finance' in request.path %}bg-indigo-600 text-white{% endif %}">
+                <i class="fas fa-wallet w-6"></i>
+                <span class="ml-3" x-show="sidebarOpen || mobileMenuOpen">Finance</span>
+            </a>
+            
+            <a href="{% url 'membres:ministry_list' %}" class="flex items-center px-4 py-3 mb-2 text-slate-300 hover:bg-slate-700/50 hover:text-white rounded-lg transition">
+                <i class="fas fa-hands-praying w-6"></i>
+                <span class="ml-3" x-show="sidebarOpen || mobileMenuOpen">Ministères</span>
+            </a>
+            
+            <a href="{% url 'membres:group_list' %}" class="flex items-center px-4 py-3 mb-2 text-slate-300 hover:bg-slate-700/50 hover:text-white rounded-lg transition">
+                <i class="fas fa-users-between-lines w-6"></i>
+                <span class="ml-3" x-show="sidebarOpen || mobileMenuOpen">Groupes</span>
+            </a>
+            
+            <a href="{% url 'accounts:user_list' %}" class="flex items-center px-4 py-3 mb-2 text-slate-300 hover:bg-slate-700/50 hover:text-white rounded-lg transition">
+                <i class="fas fa-user-shield w-6"></i>
+                <span class="ml-3" x-show="sidebarOpen || mobileMenuOpen">Utilisateurs</span>
+            </a>
+        {% endif %}
+            
+            <!-- Menu Secrétaire/Responsable -->
+            {% if request.user.role == 'member_manager' or request.user.role == 'finance'%}
+            <p class="px-4 text-xs font-semibold text-slate-500 uppercase mb-2 mt-4" x-show="sidebarOpen || mobileMenuOpen">Mon Groupe</p>
+            
+            <a href="{% url 'membres:list' %}" class="flex items-center px-4 py-3 mb-2 text-slate-300 hover:bg-slate-700/50 hover:text-white rounded-lg transition">
+                <i class="fas fa-users w-6"></i>
+                <span class="ml-3" x-show="sidebarOpen || mobileMenuOpen">Mes Membres</span>
+            </a>
+            
+            <a href="{% url 'membres:add' %}" class="flex items-center px-4 py-3 mb-2 text-slate-300 hover:bg-slate-700/50 hover:text-white rounded-lg transition">
+                <i class="fas fa-user-plus w-6"></i>
+                <span class="ml-3" x-show="sidebarOpen || mobileMenuOpen">Ajouter Membre</span>
+            </a>
+            
+            <a href="{% url 'membres:attendance_mark' %}" class="flex items-center px-4 py-3 mb-2 text-slate-300 hover:bg-slate-700/50 hover:text-white rounded-lg transition">
+                <i class="fas fa-clipboard-check w-6"></i>
+                <span class="ml-3" x-show="sidebarOpen || mobileMenuOpen">Présences</span>
+            </a>
+            {% endif %}
+            
+            <!-- Menu Membre Simple -->
+            {% if user.role == 'member' %}
+            <p class="px-4 text-xs font-semibold text-slate-500 uppercase mb-2 mt-4" x-show="sidebarOpen || mobileMenuOpen">Mon Espace</p>
+            
+            <a href="{% url 'membres:my_profile' %}" class="flex items-center px-4 py-3 mb-2 text-slate-300 hover:bg-slate-700/50 hover:text-white rounded-lg transition">
+                <i class="fas fa-user w-6"></i>
+                <span class="ml-3" x-show="sidebarOpen || mobileMenuOpen">Mon Profil</span>
+            </a>
+            
+            {% if user.member_profile %}
+            <a href="{% url 'membres:generate_card' user.member_profile.id %}" class="flex items-center px-4 py-3 mb-2 text-slate-300 hover:bg-slate-700/50 hover:text-white rounded-lg transition">
+                <i class="fas fa-id-card w-6"></i>
+                <span class="ml-3" x-show="sidebarOpen || mobileMenuOpen">Ma Carte</span>
+            </a>
+            {% endif %}
+            {% endif %}
+            
+            <!-- Menu Commun -->
+            <div class="border-t border-slate-700 mt-4 pt-4">
+                <a href="{% url 'accounts:profile' %}" class="flex items-center px-4 py-3 mb-2 text-slate-300 hover:bg-slate-700/50 hover:text-white rounded-lg transition">
+                    <i class="fas fa-user-circle w-6"></i>
+                    <span class="ml-3" x-show="sidebarOpen || mobileMenuOpen">Paramètres</span>
+                </a>
+                <a href="{% url 'accounts:logout' %}" class="flex items-center px-4 py-3 text-red-400 hover:bg-red-500/10 hover:text-red-300 rounded-lg transition">
+                    <i class="fas fa-sign-out-alt w-6"></i>
+                    <span class="ml-3" x-show="sidebarOpen || mobileMenuOpen">Déconnexion</span>
+                </a>
+            </div>
+        </nav>
+    </div>
+    
+    <!-- Main Content Area -->
+    <div class="lg:pl-72" :class="{'lg:pl-20': !sidebarOpen}">
+        
+        <!-- Top Navbar -->
+        <div class="sticky top-0 z-40 flex h-16 bg-white border-b shadow-sm">
+            <div class="flex flex-1 justify-between px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center space-x-4">
+                    <button @click="mobileMenuOpen = true" class="lg:hidden text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                    <button @click="sidebarOpen = !sidebarOpen" class="hidden lg:block text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <!-- User Menu -->
+                    <div class="relative" x-data="{ open: false }">
+                        <button @click="open = !open" class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold">
+                                {{ user.first_name.0|upper }}{{ user.last_name.0|upper }}
+                            </div>
+                            <div class="hidden md:block text-left">
+                                <p class="text-sm font-semibold text-gray-700">{{ user.get_full_name }}</p>
+                                <p class="text-xs text-gray-500">{{ user.get_role_display }}</p>
+                            </div>
+                            <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
+                        </button>
+                        
+                        <div x-show="open" @click.away="open = false" x-transition
+                             class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-1 border">
+                            <a href="{% url 'accounts:profile' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                <i class="fas fa-user w-5"></i> Mon Profil
+                            </a>
+                            <a href="{% url 'accounts:logout' %}" class="block px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+                                <i class="fas fa-sign-out-alt w-5"></i> Déconnexion
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Page Content -->
+        <main class="flex-1 overflow-y-auto">
+            <div class="py-6 px-4 sm:px-6 lg:px-8">
+                
+                <!-- Messages -->
+                {% if messages %}
+                <div class="mb-6 space-y-3">
+                    {% for message in messages %}
+                    <div class="rounded-lg p-4 {% if message.tags == 'success' %}bg-green-50 text-green-800 border border-green-200{% elif message.tags == 'error' %}bg-red-50 text-red-800 border border-red-200{% elif message.tags == 'warning' %}bg-yellow-50 text-yellow-800 border border-yellow-200{% else %}bg-blue-50 text-blue-800 border border-blue-200{% endif %}">
+                        <div class="flex items-center">
+                            <i class="fas {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'error' %}fa-exclamation-circle{% elif message.tags == 'warning' %}fa-exclamation-triangle{% else %}fa-info-circle{% endif %} mr-3"></i>
+                            <p class="text-sm font-medium">{{ message }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                <!-- Page Header -->
+                <div class="mb-6">
+                    <div class="sm:flex sm:items-center sm:justify-between">
+                        <div>
+                            <h1 class="text-3xl font-bold text-gray-900">{% block page_title %}{{ title }}{% endblock %}</h1>
+                            <nav class="mt-2 flex" aria-label="Breadcrumb">
+                                <ol class="flex items-center space-x-2 text-sm text-gray-500">
+                                    {% block breadcrumb %}
+                                    <li><a href="{% url 'dashboard' %}" class="hover:text-gray-700"><i class="fas fa-home"></i></a></li>
+                                    {% endblock %}
+                                </ol>
+                            </nav>
+                        </div>
+                        <div class="mt-4 sm:mt-0">
+                            {% block page_actions %}{% endblock %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Content Block -->
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+        
+        <!-- Footer -->
+        <footer class="bg-white border-t py-4 px-4 sm:px-6 lg:px-8">
+            <div class="text-center text-sm text-gray-500">
+                <p>&copy; 2025 Gestion Église. Tous droits réservés.</p>
+            </div>
+        </footer>
+    </div>
+    
+    {% else %}
+    
+    <!-- ========================================== -->
+    <!-- LAYOUT PUBLIC (Non authentifié) -->
+    <!-- ========================================== -->
+    
+    <!-- Navbar Public -->
+    <nav class="bg-white shadow-md sticky top-0 z-50" x-data="{ mobileMenuOpen: false }">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <div class="flex items-center">
+                    <a href="/" class="flex items-center space-x-3">
+                        <div class="w-12 h-12 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-full flex items-center justify-center">
+                            <i class="fas fa-church text-white text-xl"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-xl font-bold text-gray-900">Église Évangélique</h1>
+                            <p class="text-xs text-gray-500">Communauté de Foi</p>
+                        </div>
+                    </a>
+                </div>
+                
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="/" class="text-gray-700 hover:text-indigo-600 font-medium">Accueil</a>
+                    <a href="/about" class="text-gray-700 hover:text-indigo-600 font-medium">À Propos</a>
+                    <a href="/services" class="text-gray-700 hover:text-indigo-600 font-medium">Cultes</a>
+                    <a href="/contact" class="text-gray-700 hover:text-indigo-600 font-medium">Contact</a>
+                </div>
+                
+                <div class="hidden md:flex items-center space-x-4">
+                    <a href="{% url 'accounts:login' %}" class="text-gray-700 hover:text-indigo-600 font-medium">Connexion</a>
+                    <a href="/donate" class="inline-flex items-center px-4 py-2 border-0 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700">
+                        <i class="fas fa-heart mr-2"></i>
+                        Faire un Don
+                    </a>
+                </div>
+                
+                <button @click="mobileMenuOpen = !mobileMenuOpen" class="md:hidden text-gray-700 hover:text-indigo-600">
+                    <i class="fas" :class="mobileMenuOpen ? 'fa-times' : 'fa-bars'" class="text-xl"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div x-show="mobileMenuOpen" x-transition class="md:hidden border-t">
+            <div class="px-2 pt-2 pb-3 space-y-1 bg-white">
+                <a href="/" class="block px-3 py-2 rounded-lg text-base font-medium text-gray-700 hover:text-indigo-600 hover:bg-gray-100">Accueil</a>
+                <a href="{% url 'accounts:login' %}" class="block px-3 py-2 rounded-lg text-base font-medium text-gray-700 hover:text-indigo-600 hover:bg-gray-100">Connexion</a>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Content Public -->
+    
+    
+    <!-- Footer Public -->
+    <footer class="bg-gray-900 text-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <div class="flex items-center space-x-3 mb-4">
+                        <div class="w-10 h-10 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-full flex items-center justify-center">
+                            <i class="fas fa-church text-white"></i>
+                        </div>
+                        <h3 class="text-xl font-bold">Église</h3>
+                    </div>
+                    <p class="text-gray-400 text-sm">Une communauté de foi, d'amour et d'espérance.</p>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Liens Rapides</h4>
+                    <ul class="space-y-2">
+                        <li><a href="/" class="text-gray-400 hover:text-white text-sm">Accueil</a></li>
+                        <li><a href="/about" class="text-gray-400 hover:text-white text-sm">À Propos</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Contact</h4>
+                    <p class="text-gray-400 text-sm"><i class="fas fa-map-marker-alt mr-2"></i>Niamey, Niger</p>
+                    <p class="text-gray-400 text-sm"><i class="fas fa-phone mr-2"></i>+227 XX XX XX XX</p>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Suivez-nous</h4>
+                    <div class="flex space-x-3">
+                        <a href="#" class="w-10 h-10 bg-gray-800 hover:bg-indigo-600 rounded-full flex items-center justify-center">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        <a href="#" class="w-10 h-10 bg-gray-800 hover:bg-indigo-600 rounded-full flex items-center justify-center">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="border-t border-gray-800">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                <p class="text-gray-400 text-sm text-center">&copy; 2025 Église Évangélique. Tous droits réservés.</p>
+            </div>
+        </div>
+    </footer>
+    
+    {% endif %}
+    
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

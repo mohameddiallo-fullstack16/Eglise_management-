@@ -1,0 +1,270 @@
+
+
+{% block breadcrumb %}
+<li><a href="{% url 'dashboard:home' %}" class="hover:text-gray-700"><i class="fas fa-home"></i></a></li>
+<li class="text-gray-400">/</li>
+<li class="text-gray-900">Mon Profil Membre</li>
+{% endblock %}
+
+{% block content %}
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    
+    <!-- Colonne principale -->
+    <div class="lg:col-span-2 space-y-6">
+        
+        <!-- Informations personnelles -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4">
+                <h3 class="text-lg font-semibold text-white">Mes Informations</h3>
+            </div>
+            <div class="p-6">
+                <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Numéro de Membre</dt>
+                        <dd class="mt-1 text-sm font-semibold text-gray-900">{{ member.member_number }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Nom Complet</dt>
+                        <dd class="mt-1 text-sm font-semibold text-gray-900">{{ member.get_full_name }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Genre</dt>
+                        <dd class="mt-1 text-sm text-gray-900">
+                            {% if member.gender == 'M' %}
+                            <i class="fas fa-mars text-blue-500"></i> Masculin
+                            {% else %}
+                            <i class="fas fa-venus text-pink-500"></i> Féminin
+                            {% endif %}
+                        </dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Date de Naissance</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ member.birth_date|date:"d/m/Y" }} ({{ member.get_age }} ans)</dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Statut Matrimonial</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ member.get_marital_status_display }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Profession</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ member.profession|default:"-" }}</dd>
+                    </div>
+                </dl>
+            </div>
+        </div>
+        
+        <!-- Contact -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="bg-gradient-to-r from-green-600 to-teal-600 px-6 py-4">
+                <h3 class="text-lg font-semibold text-white">Contact</h3>
+            </div>
+            <div class="p-6 space-y-4">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-phone text-green-600"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500">Téléphone</p>
+                        <p class="text-sm font-medium text-gray-900">{{ member.phone }}</p>
+                    </div>
+                </div>
+                
+                {% if member.email %}
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-envelope text-blue-600"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500">Email</p>
+                        <p class="text-sm font-medium text-gray-900">{{ member.email }}</p>
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if member.address %}
+                <div class="flex items-start space-x-3">
+                    <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-map-marker-alt text-red-600"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500">Adresse</p>
+                        <p class="text-sm font-medium text-gray-900">{{ member.address }}</p>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Mes statistiques de présence -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="bg-gradient-to-r from-yellow-600 to-orange-600 px-6 py-4">
+                <h3 class="text-lg font-semibold text-white">Mes Présences</h3>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-3 gap-4 mb-6">
+                    <div class="text-center p-4 bg-gray-50 rounded-lg">
+                        <p class="text-2xl font-bold text-gray-900">{{ attendance_stats.total }}</p>
+                        <p class="text-xs text-gray-500 mt-1">Événements</p>
+                    </div>
+                    <div class="text-center p-4 bg-green-50 rounded-lg">
+                        <p class="text-2xl font-bold text-green-600">{{ attendance_stats.present }}</p>
+                        <p class="text-xs text-gray-500 mt-1">Présent</p>
+                    </div>
+                    <div class="text-center p-4 bg-indigo-50 rounded-lg">
+                        <p class="text-2xl font-bold text-indigo-600">{{ attendance_stats.rate }}%</p>
+                        <p class="text-xs text-gray-500 mt-1">Taux</p>
+                    </div>
+                </div>
+                
+                {% if recent_attendances %}
+                <div class="space-y-2">
+                    <p class="text-sm font-medium text-gray-700 mb-3">Dernières Présences</p>
+                    {% for attendance in recent_attendances|slice:":5" %}
+                    <div class="flex items-center justify-between p-3 rounded-lg bg-gray-50">
+                        <span class="text-sm text-gray-600">{{ attendance.date|date:"d/m/Y" }}</span>
+                        {% if attendance.present %}
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            <i class="fas fa-check mr-1"></i> Présent
+                        </span>
+                        {% else %}
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            <i class="fas fa-times mr-1"></i> Absent
+                        </span>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-sm text-gray-500 text-center py-4">Aucune présence enregistrée</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Colonne latérale -->
+    <div class="space-y-6">
+        
+        <!-- Photo et carte -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="p-6">
+                <div class="flex flex-col items-center">
+                    {% if member.photo %}
+                    <img src="{{ member.photo.url }}" alt="{{ member.get_full_name }}" 
+                         class="w-32 h-32 rounded-full object-cover mb-4 border-4 border-indigo-200">
+                    {% else %}
+                    <div class="w-32 h-32 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white text-4xl font-bold mb-4">
+                        {{ member.first_name.0 }}{{ member.last_name.0 }}
+                    </div>
+                    {% endif %}
+                    
+                    <h2 class="text-xl font-bold text-gray-900 text-center">{{ member.get_full_name }}</h2>
+                    <p class="text-sm text-gray-500 mt-1">{{ member.member_number }}</p>
+                    
+                    <div class="mt-4">
+                        {% if member.status == 'active' %}
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                            <i class="fas fa-check-circle mr-1"></i> Actif
+                        </span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mt-6 w-full">
+                        <a href="{% url 'membres:generate_card' member.id %}" 
+                           class="w-full flex items-center justify-center px-4 py-3 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700">
+                            <i class="fas fa-id-card mr-2"></i>
+                            Télécharger ma carte
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Famille -->
+        {% if member.family %}
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="bg-gradient-to-r from-purple-600 to-pink-600 px-6 py-4">
+                <h3 class="text-lg font-semibold text-white">Ma Famille</h3>
+            </div>
+            <div class="p-6">
+                <div class="flex items-center space-x-3">
+                    <div class="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center">
+                        <i class="fas fa-people-group text-purple-600 text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-semibold text-gray-900">{{ member.family.name }}</p>
+                        <p class="text-xs text-gray-500">{{ member.family.get_members_count }} membres</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Ministères -->
+        {% if member.ministries.all %}
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="bg-gradient-to-r from-blue-600 to-cyan-600 px-6 py-4">
+                <h3 class="text-lg font-semibold text-white">Mes Ministères</h3>
+            </div>
+            <div class="p-6">
+                <div class="space-y-2">
+                    {% for ministry in member.ministries.all %}
+                    <div class="flex items-center space-x-2 p-3 rounded-lg bg-blue-50">
+                        <i class="fas fa-hands-praying text-blue-600"></i>
+                        <span class="text-sm text-gray-900">{{ ministry.name }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Groupes -->
+        {% if member.groups.all %}
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="bg-gradient-to-r from-green-600 to-teal-600 px-6 py-4">
+                <h3 class="text-lg font-semibold text-white">Mes Groupes</h3>
+            </div>
+            <div class="p-6">
+                <div class="space-y-2">
+                    {% for group in member.groups.all %}
+                    <div class="flex items-center space-x-2 p-3 rounded-lg bg-green-50">
+                        <i class="fas fa-users text-green-600"></i>
+                        <span class="text-sm text-gray-900">{{ group.name }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Informations spirituelles -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4">
+                <h3 class="text-lg font-semibold text-white">Informations Spirituelles</h3>
+            </div>
+            <div class="p-6 space-y-4">
+                {% if member.baptism_date %}
+                <div>
+                    <p class="text-xs text-gray-500">Date de Baptême</p>
+                    <p class="text-sm font-semibold text-gray-900">{{ member.baptism_date|date:"d/m/Y" }}</p>
+                </div>
+                {% endif %}
+                
+                {% if member.membership_date %}
+                <div>
+                    <p class="text-xs text-gray-500">Date d'Adhésion</p>
+                    <p class="text-sm font-semibold text-gray-900">{{ member.membership_date|date:"d/m/Y" }}</p>
+                </div>
+                {% endif %}
+                
+                <div>
+                    <p class="text-xs text-gray-500">Membre depuis</p>
+                    <p class="text-sm font-semibold text-gray-900">{{ member.created_at|date:"d/m/Y" }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

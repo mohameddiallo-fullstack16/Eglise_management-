@@ -1,0 +1,27 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Bienvenue</title>
+</head>
+<body>
+  <p>Bonjour {{ member.get_full_name }},</p>
+
+  <p>Un compte a été créé pour vous sur la plateforme.</p>
+
+  <p><strong>Identifiant (username)</strong> : {{ username }}<br>
+     <strong>Email</strong> : {{ member.user.email }}</p>
+
+  <p><strong>Mot de passe temporaire</strong> : <code>{{ password }}</code></p>
+
+  <p>Pour des raisons de sécurité, merci de <strong>changer votre mot de passe dès la première connexion</strong> :
+    <a href="{{ reset_link }}">Cliquez ici pour définir votre nouveau mot de passe</a>.
+  </p>
+
+  <p>Ou connectez-vous ici : <a href="{{ login_url }}">{{ login_url }}</a></p>
+
+  <p>Si vous n’avez pas demandé ce compte, ignorez cet email.</p>
+
+  <p>— L'équipe</p>
+</body>
+</html>

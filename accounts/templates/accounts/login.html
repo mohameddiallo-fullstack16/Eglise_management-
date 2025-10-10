@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="fr" class="h-full bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion - Gestion Église</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="h-full font-sans antialiased">
+    
+    <div class="min-h-full flex">
+        
+        <!-- Left Side - Form -->
+        <div class="flex-1 flex flex-col justify-center py-12 px-4 sm:px-6 lg:flex-none lg:px-20 xl:px-24 bg-white">
+            <div class="mx-auto w-full max-w-sm lg:w-96">
+                
+                <!-- Logo & Title -->
+                <div class="text-center mb-8">
+                    <div class="mx-auto w-16 h-16 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
+                        <i class="fas fa-church text-white text-2xl"></i>
+                    </div>
+                    <h2 class="text-3xl font-bold text-gray-900">Bienvenue</h2>
+                    <p class="mt-2 text-sm text-gray-600">Connectez-vous à votre compte</p>
+                </div>
+                
+                <!-- Messages -->
+                {% if messages %}
+                <div class="mb-6 space-y-3">
+                    {% for message in messages %}
+                    <div class="rounded-lg p-4 {% if message.tags == 'error' %}bg-red-50 text-red-800 border border-red-200{% else %}bg-blue-50 text-blue-800 border border-blue-200{% endif %}">
+                        <div class="flex items-center">
+                            <i class="fas {% if message.tags == 'error' %}fa-exclamation-circle{% else %}fa-info-circle{% endif %} mr-2"></i>
+                            <p class="text-sm font-medium">{{ message }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                <!-- Login Form -->
+                <form method="post" action="{% url 'accounts:login' %}" class="space-y-6">
+                    {% csrf_token %}
+                    
+                    <!-- Username -->
+                    <div>
+                        <label for="id_username" class="block text-sm font-medium text-gray-700 mb-2">
+                            Nom d'utilisateur
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-user text-gray-400"></i>
+                            </div>
+                            <input type="text" 
+                                   id="id_username" 
+                                   name="username" 
+                                   required 
+                                   class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition-all"
+                                   placeholder="Entrez votre nom d'utilisateur">
+                        </div>
+                        {% if form.username.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.username.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Password -->
+                    <div>
+                        <label for="id_password" class="block text-sm font-medium text-gray-700 mb-2">
+                            Mot de passe
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-lock text-gray-400"></i>
+                            </div>
+                            <input type="password" 
+                                   id="id_password" 
+                                   name="password" 
+                                   required 
+                                   class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition-all"
+                                   placeholder="Entrez votre mot de passe">
+                        </div>
+                        {% if form.password.errors %}
+                        <p class="mt-2 text-sm text-red-600">{{ form.password.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Remember Me & Forgot Password -->
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <input id="remember_me" 
+                                   name="remember_me" 
+                                   type="checkbox" 
+                                   class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                            <label for="remember_me" class="ml-2 block text-sm text-gray-700">
+                                Se souvenir de moi
+                            </label>
+                        </div>
+                        <div class="text-sm">
+                            <a href=" {% url 'accounts:change_password' %}" class="font-medium text-indigo-600 hover:text-indigo-500">
+                                Mot de passe oublié ?
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Submit Button -->
+                    <button type="submit" 
+                            class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all transform hover:scale-105">
+                        <i class="fas fa-sign-in-alt mr-2"></i>
+                        Se connecter
+                    </button>
+                </form>
+                
+                <!-- Register Link -->
+                <div class="mt-6 text-center">
+                    <p class="text-sm text-gray-600">
+                        Pas encore de compte ?
+                        <a href="{% url 'accounts:register' %}" class="font-medium text-indigo-600 hover:text-indigo-500">
+                            S'inscrire maintenant
+                        </a>
+                    </p>
+                </div>
+                
+            </div>
+        </div>
+        
+        <!-- Right Side - Image/Info -->
+        <div class="hidden lg:block relative flex-1 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500">
+            <div class="absolute inset-0 bg-black opacity-40"></div>
+            <div class="relative h-full flex flex-col justify-center items-center text-white p-12">
+                <div class="max-w-md text-center">
+                    <i class="fas fa-church text-8xl mb-8 opacity-90"></i>
+                    <h1 class="text-4xl font-bold mb-4">Système de Gestion d'Église</h1>
+                    <p class="text-xl text-gray-200 mb-8">
+                        Gérez efficacement vos membres, finances et activités en un seul endroit
+                    </p>
+                    
+                    <div class="grid grid-cols-2 gap-6 mt-12">
+                        <div class="bg-white/10 backdrop-blur-sm rounded-lg p-6">
+                            <i class="fas fa-users text-3xl mb-3"></i>
+                            <h3 class="font-semibold mb-2">Gestion des Membres</h3>
+                            <p class="text-sm text-gray-200">Suivez et gérez tous vos membres</p>
+                        </div>
+                        <div class="bg-white/10 backdrop-blur-sm rounded-lg p-6">
+                            <i class="fas fa-wallet text-3xl mb-3"></i>
+                            <h3 class="font-semibold mb-2">Finances</h3>
+                            <p class="text-sm text-gray-200">Gérez les dons et dépenses</p>
+                        </div>
+                        <div class="bg-white/10 backdrop-blur-sm rounded-lg p-6">
+                            <i class="fas fa-chart-line text-3xl mb-3"></i>
+                            <h3 class="font-semibold mb-2">Rapports</h3>
+                            <p class="text-sm text-gray-200">Générez des statistiques détaillées</p>
+                        </div>
+                        <div class="bg-white/10 backdrop-blur-sm rounded-lg p-6">
+                            <i class="fas fa-calendar text-3xl mb-3"></i>
+                            <h3 class="font-semibold mb-2">Événements</h3>
+                            <p class="text-sm text-gray-200">Organisez vos activités</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+</body>
+</html>

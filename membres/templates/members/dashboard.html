@@ -1,0 +1,935 @@
+{% extends "members/base.html" %}
+{% load math_filters %}
+
+{% block content %}
+
+<!-- ========================================== -->
+<!-- DASHBOARD ADMINISTRATEUR -->
+<!-- ========================================== -->
+{% if user.has_admin_access %}
+
+<!-- Welcome Banner Admin -->
+<div class="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 rounded-2xl shadow-2xl p-8 mb-8 text-white animate-fade-in-up">
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl md:text-4xl font-bold mb-2">Bonjour, {{ user.get_full_name|default:user.username|title }} 👋</h1>
+            <p class="text-white/90 text-lg">Voici un aperçu de votre église aujourd'hui</p>
+        </div>
+        <div class="hidden md:block">
+            <div class="text-right">
+                <p class="text-sm text-white/80">Date du jour</p>
+                <p class="text-2xl font-bold">{{ today|date:"d F Y" }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- KPI Cards Admin -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
+    <!-- Total Membres -->
+    <div class="bg-white rounded-2xl shadow-lg card-hover p-6 border border-gray-100 animate-fade-in-up" style="animation-delay: 0.1s">
+        <div class="flex items-center justify-between">
+            <div class="flex-1">
+                <p class="text-sm font-medium text-gray-500 mb-1">Total Membres</p>
+                <p class="text-3xl font-bold text-gray-900 mb-2">{{ total_members }}</p>
+                <div class="flex items-center text-sm text-green-600">
+                    <i class="fas fa-arrow-up mr-1"></i>
+                    <span class="font-medium">+{{ new_members_month }} ce mois</span>
+                </div>
+            </div>
+            <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
+                <i class="fas fa-users text-white text-2xl"></i>
+            </div>
+        </div>
+        <div class="mt-4 pt-4 border-t border-gray-100">
+            <a href="{% url 'membres:list' %}" class="text-sm font-medium text-blue-600 hover:text-blue-700 flex items-center">
+                Voir les membres <i class="fas fa-arrow-right ml-2 text-xs"></i>
+            </a>
+        </div>
+    </div>
+    
+    <!-- Revenus du Mois -->
+    <div class="bg-white rounded-2xl shadow-lg card-hover p-6 border border-gray-100 animate-fade-in-up" style="animation-delay: 0.2s">
+        <div class="flex items-center justify-between">
+            <div class="flex-1">
+                <p class="text-sm font-medium text-gray-500 mb-1">Revenus du Mois</p>
+                <p class="text-3xl font-bold text-gray-900 mb-2">{{ financial_stats.monthly_income|floatformat:0 }}</p>
+                <p class="text-sm text-gray-500">FCFA</p>
+            </div>
+            <div class="w-14 h-14 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center shadow-lg">
+                <i class="fas fa-chart-line text-white text-2xl"></i>
+            </div>
+        </div>
+        <div class="mt-4 pt-4 border-t border-gray-100">
+            <a href="{% url 'finance:dashboard' %}" class="text-sm font-medium text-green-600 hover:text-green-700 flex items-center">
+                Voir finances <i class="fas fa-arrow-right ml-2 text-xs"></i>
+            </a>
+        </div>
+    </div>
+    
+    <!-- Familles -->
+    <div class="bg-white rounded-2xl shadow-lg card-hover p-6 border border-gray-100 animate-fade-in-up" style="animation-delay: 0.3s">
+        <div class="flex items-center justify-between">
+            <div class="flex-1">
+                <p class="text-sm font-medium text-gray-500 mb-1">Familles</p>
+                <p class="text-3xl font-bold text-gray-900 mb-2">{{ total_families }}</p>
+                <p class="text-sm text-gray-500">Actives</p>
+            </div>
+            <div class="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
+                <i class="fas fa-people-group text-white text-2xl"></i>
+            </div>
+        </div>
+        <div class="mt-4 pt-4 border-t border-gray-100">
+            <a href="{% url 'membres:family_list' %}" class="text-sm font-medium text-purple-600 hover:text-purple-700 flex items-center">
+                Voir familles <i class="fas fa-arrow-right ml-2 text-xs"></i>
+            </a>
+        </div>
+    </div>
+    
+    <!-- Transactions à Valider -->
+    <div class="bg-white rounded-2xl shadow-lg card-hover p-6 border border-gray-100 animate-fade-in-up" style="animation-delay: 0.4s">
+        <div class="flex items-center justify-between">
+            <div class="flex-1">
+                <p class="text-sm font-medium text-gray-500 mb-1">À Valider</p>
+                <p class="text-3xl font-bold text-gray-900 mb-2">{{ pending_transactions }}</p>
+                <div class="flex items-center text-sm text-orange-600">
+                    <i class="fas fa-clock mr-1"></i>
+                    <span class="font-medium">En attente</span>
+                </div>
+            </div>
+            <div class="w-14 h-14 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl flex items-center justify-center shadow-lg">
+                <i class="fas fa-exclamation-triangle text-white text-2xl"></i>
+            </div>
+        </div>
+        <div class="mt-4 pt-4 border-t border-gray-100">
+            <a href="{% url 'finance:transaction_list' %}?validated=false" class="text-sm font-medium text-orange-600 hover:text-orange-700 flex items-center">
+                Voir transactions <i class="fas fa-arrow-right ml-2 text-xs"></i>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    <!-- Répartition par Genre -->
+    <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 animate-fade-in-up" style="animation-delay: 0.5s">
+        <h3 class="text-lg font-bold text-gray-900 mb-6 flex items-center">
+            <i class="fas fa-chart-pie text-blue-500 mr-2"></i>
+            Répartition par Genre
+        </h3>
+        <div style="height: 280px; position: relative;">
+            <canvas id="genderChart"></canvas>
+        </div>
+        <div class="mt-6 grid grid-cols-2 gap-4">
+            {% for stat in gender_stats %}
+            <div class="text-center p-3 {% if stat.gender == 'M' %}bg-blue-50{% else %}bg-pink-50{% endif %} rounded-xl">
+                <p class="text-2xl font-bold {% if stat.gender == 'M' %}text-blue-600{% else %}text-pink-600{% endif %}">
+                    {{ stat.count }}
+                </p>
+                <p class="text-sm text-gray-600">
+                    {% if stat.gender == 'M' %}Hommes{% else %}Femmes{% endif %} 
+                    ({{ stat.count|multiply:100|divide:total_members|floatformat:0 }}%)
+                </p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- Tranches d'Âge -->
+    <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 animate-fade-in-up" style="animation-delay: 0.6s">
+        <h3 class="text-lg font-bold text-gray-900 mb-6 flex items-center">
+            <i class="fas fa-chart-bar text-purple-500 mr-2"></i>
+            Répartition par Âge
+        </h3>
+        <div style="height: 280px; position: relative;">
+            <canvas id="ageChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Évolution des Membres -->
+<div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 mb-8 animate-fade-in-up" style="animation-delay: 0.7s">
+    <h3 class="text-lg font-bold text-gray-900 mb-6 flex items-center">
+        <i class="fas fa-chart-line text-green-500 mr-2"></i>
+        Évolution des Membres (12 derniers mois)
+    </h3>
+    <div style="height: 300px; position: relative;">
+        <canvas id="membersChart"></canvas>
+    </div>
+</div>
+
+<!-- Bottom Section -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    <!-- Nouveaux Membres -->
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 animate-fade-in-up" style="animation-delay: 0.8s">
+        <div class="p-6 border-b border-gray-100">
+            <h3 class="text-lg font-bold text-gray-900 flex items-center">
+                <i class="fas fa-user-plus text-blue-500 mr-2"></i>
+                Nouveaux Membres
+            </h3>
+        </div>
+        <div class="p-6">
+            <div class="space-y-4">
+                {% for member in recent_members %}
+                <div class="flex items-center space-x-4 p-3 rounded-xl hover:bg-gray-50 transition-all cursor-pointer">
+                    <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-md">
+                        {{ member.first_name.0 }}{{ member.last_name.0 }}
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-sm font-semibold text-gray-900">{{ member.get_full_name }}</p>
+                        <p class="text-xs text-gray-500">Ajouté le {{ member.created_at|date:"d/m/Y" }}</p>
+                    </div>
+                    <a href="{% url 'membres:detail' member.id %}" class="text-blue-500 hover:text-blue-700">
+                        <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+                {% empty %}
+                <div class="text-center py-8">
+                    <i class="fas fa-users text-gray-300 text-4xl mb-3"></i>
+                    <p class="text-sm text-gray-500">Aucun nouveau membre</p>
+                </div>
+                {% endfor %}
+            </div>
+            {% if recent_members %}
+            <div class="mt-6 pt-4 border-t">
+                <a href="{% url 'membres:list' %}" class="w-full text-center block py-2 text-sm text-blue-600 hover:text-blue-700 font-semibold hover:bg-blue-50 rounded-lg transition-colors">
+                    Voir tous les membres <i class="fas fa-arrow-right ml-1"></i>
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Anniversaires à Venir -->
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 animate-fade-in-up" style="animation-delay: 0.9s">
+        <div class="p-6 border-b border-gray-100">
+            <h3 class="text-lg font-bold text-gray-900 flex items-center">
+                <i class="fas fa-birthday-cake text-yellow-500 mr-2"></i>
+                Anniversaires à Venir
+            </h3>
+        </div>
+        <div class="p-6">
+            <div class="space-y-4">
+                {% for birthday in upcoming_birthdays %}
+                <div class="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition-all">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-12 h-12 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center shadow-md">
+                            <i class="fas fa-birthday-cake text-white"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-semibold text-gray-900">{{ birthday.member.get_full_name }}</p>
+                            <p class="text-xs text-gray-500">{{ birthday.date|date:"d/m/Y" }} - {{ birthday.age }} ans</p>
+                        </div>
+                    </div>
+                    <span class="px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800">
+                        Dans {{ birthday.days_until }} jour{{ birthday.days_until|pluralize }}
+                    </span>
+                </div>
+                {% empty %}
+                <div class="text-center py-8">
+                    <i class="fas fa-birthday-cake text-gray-300 text-4xl mb-3"></i>
+                    <p class="text-sm text-gray-500">Aucun anniversaire à venir</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Transactions Récentes -->
+{% if recent_transactions %}
+<div class="bg-white rounded-2xl shadow-lg border border-gray-100 animate-fade-in-up" style="animation-delay: 1s">
+    <div class="p-6 border-b border-gray-100">
+        <h3 class="text-lg font-bold text-gray-900 flex items-center">
+            <i class="fas fa-money-bill-wave text-green-500 mr-2"></i>
+            Transactions Récentes
+        </h3>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead class="bg-gray-50 border-b border-gray-100">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Montant</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contributeur</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                {% for transaction in recent_transactions %}
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ transaction.date|date:"d/m/Y" }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ transaction.get_transaction_type_display }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold {% if transaction.category.category_type == 'income' %}text-green-600{% else %}text-red-600{% endif %}">
+                        {{ transaction.amount|floatformat:0 }} {{ transaction.currency }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        {% if transaction.member %}{{ transaction.member.get_full_name }}{% else %}Anonyme{% endif %}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        {% if transaction.is_validated %}
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            <i class="fas fa-check-circle mr-1"></i> Validée
+                        </span>
+                        {% else %}
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                            <i class="fas fa-clock mr-1"></i> En attente
+                        </span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="p-4 border-t">
+        <a href="{% url 'finance:transaction_list' %}" class="text-sm text-blue-600 hover:text-blue-700 font-medium">
+            Voir toutes les transactions <i class="fas fa-arrow-right ml-1"></i>
+        </a>
+    </div>
+</div>
+{% endif %}
+
+<!-- ========================================== -->
+<!-- DASHBOARD RESPONSABLE / SECRÉTAIRE -->
+<!-- ========================================== -->
+{% elif user.has_finance_access %}
+
+<!-- Welcome Section Responsable -->
+<div class="bg-gradient-to-r from-teal-500 via-cyan-600 to-blue-600 rounded-2xl shadow-2xl p-8 mb-8 text-white">
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl md:text-4xl font-bold mb-2">Bonjour, {{ user.first_name }} 👋</h1>
+            <p class="text-white/90 text-lg">Gérez votre groupe et suivez vos membres</p>
+        </div>
+        <div class="hidden md:flex items-center space-x-4">
+            <div class="text-center px-6 py-3 bg-white/20 backdrop-blur-sm rounded-xl">
+                <p class="text-sm text-white/80">Votre Groupe</p>
+                <p class="text-xl font-bold">{{ my_group.name }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- My Group Stats -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
+    <div class="bg-white rounded-2xl shadow-lg card-hover p-6 border border-gray-100 animate-fade-in-up" style="animation-delay: 0.1s">
+        <div class="flex items-center justify-between">
+            <div class="flex-1">
+                <p class="text-sm font-medium text-gray-500 mb-1 uppercase">Mes Membres</p>
+                <p class="text-3xl md:text-4xl font-bold text-gray-900 mb-2">{{ my_group_members_count }}</p>
+                <div class="flex items-center text-sm text-green-600">
+                    <i class="fas fa-arrow-up mr-1"></i>
+                    <span>+{{ new_members_this_month }} ce mois</span>
+                </div>
+            </div>
+            <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
+                <i class="fas fa-users text-white text-2xl"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-2xl shadow-lg card-hover p-6 border border-gray-100 animate-fade-in-up" style="animation-delay: 0.2s">
+        <div class="flex items-center justify-between">
+            <div class="flex-1">
+                <p class="text-sm font-medium text-gray-500 mb-1 uppercase">Taux Présence</p>
+                <p class="text-3xl md:text-4xl font-bold text-gray-900 mb-2">{{ attendance_rate }}%</p>
+                <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
+                    <div class="bg-gradient-to-r from-green-500 to-green-600 h-2 rounded-full" style="width: {{ attendance_rate }}%"></div>
+                </div>
+            </div>
+            <div class="w-14 h-14 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center shadow-lg">
+                <i class="fas fa-chart-line text-white text-2xl"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-2xl shadow-lg card-hover p-6 border border-gray-100 animate-fade-in-up" style="animation-delay: 0.3s">
+        <div class="flex items-center justify-between">
+            <div class="flex-1">
+                <p class="text-sm font-medium text-gray-500 mb-1 uppercase">Membres Actifs</p>
+                <p class="text-3xl md:text-4xl font-bold text-gray-900 mb-2">{{ active_members_count }}</p>
+                <p class="text-sm text-gray-500">Sur {{ my_group_members_count }} total</p>
+            </div>
+            <div class="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
+                <i class="fas fa-user-check text-white text-2xl"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-2xl shadow-lg card-hover p-6 border border-gray-100 animate-fade-in-up" style="animation-delay: 0.4s">
+        <div class="flex items-center justify-between">
+            <div class="flex-1">
+                <p class="text-sm font-medium text-gray-500 mb-1 uppercase">Prochaine Réunion</p>
+                <p class="text-2xl font-bold text-gray-900 mb-1">{{ my_group.meeting_day }}</p>
+                <p class="text-sm text-gray-600">{{ my_group.meeting_time|time:"H:i" }}</p>
+            </div>
+            <div class="w-14 h-14 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl flex items-center justify-center shadow-lg">
+                <i class="fas fa-calendar text-white text-2xl"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Gender Distribution -->
+<div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 mb-8 animate-fade-in-up" style="animation-delay: 0.5s">
+    <h3 class="text-xl font-bold text-gray-900 mb-2">Répartition par Genre</h3>
+    <p class="text-sm text-gray-500 mb-6">Distribution des membres de votre groupe</p>
+    <div style="height: 280px; position: relative;">
+        <canvas id="genderChartResponsable"></canvas>
+    </div>
+    <div class="mt-6 grid grid-cols-2 gap-4">
+        <div class="text-center p-3 bg-blue-50 rounded-xl">
+            <p class="text-2xl font-bold text-blue-600">{{ male_count }}</p>
+            <p class="text-sm text-gray-600">Hommes</p>
+        </div>
+        <div class="text-center p-3 bg-pink-50 rounded-xl">
+            <p class="text-2xl font-bold text-pink-600">{{ female_count }}</p>
+            <p class="text-sm text-gray-600">Femmes</p>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl shadow-lg p-6 mb-8 text-white animate-fade-in-up" style="animation-delay: 0.6s">
+    <h3 class="text-xl font-bold mb-4">Actions Rapides</h3>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <a href="{% url 'membres:add' %}" class="flex flex-col items-center p-4 rounded-xl bg-white/10 hover:bg-white/20 transition-all backdrop-blur-sm transform hover:scale-105">
+            <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mb-2">
+                <i class="fas fa-user-plus text-2xl"></i>
+            </div>
+            <span class="text-sm font-medium text-center">Nouveau Membre</span>
+        </a>
+        
+        <a href="{% url 'membres:attendance_mark' %}" class="flex flex-col items-center p-4 rounded-xl bg-white/10 hover:bg-white/20 transition-all backdrop-blur-sm transform hover:scale-105">
+            <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mb-2">
+                <i class="fas fa-clipboard-check text-2xl"></i>
+            </div>
+            <span class="text-sm font-medium text-center">Présences</span>
+        </a>
+        
+        <a href="{% url 'membres:list' %}" class="flex flex-col items-center p-4 rounded-xl bg-white/10 hover:bg-white/20 transition-all backdrop-blur-sm transform hover:scale-105">
+            <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mb-2">
+                <i class="fas fa-users text-2xl"></i>
+            </div>
+            <span class="text-sm font-medium text-center">Mes Membres</span>
+        </a>
+        
+        <div class="flex flex-col items-center p-4 rounded-xl bg-white/10 hover:bg-white/20 transition-all backdrop-blur-sm transform hover:scale-105 cursor-pointer" onclick="showExportModal()">
+            <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mb-2">
+                <i class="fas fa-file-export text-2xl"></i>
+            </div>
+            <span class="text-sm font-medium text-center">Exporter</span>
+        </div>
+    </div>
+</div>
+
+<!-- Members List & Birthdays -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2 bg-white rounded-2xl shadow-lg border border-gray-100 animate-fade-in-up" style="animation-delay: 0.7s">
+        <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+            <h3 class="text-xl font-bold text-gray-900">Membres de Mon Groupe</h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Membre</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Contact</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Présence</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {% for member in my_group_members %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold">
+                                    {{ member.first_name.0 }}{{ member.last_name.0 }}
+                                </div>
+                                <div class="ml-3">
+                                    <p class="text-sm font-medium text-gray-900">{{ member.get_full_name }}</p>
+                                    <p class="text-xs text-gray-500">{{ member.member_number }}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <p class="text-sm text-gray-900">{{ member.phone }}</p>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="w-16 h-2 bg-gray-200 rounded-full mr-2">
+                                    <div class="bg-green-500 h-2 rounded-full" style="width: {{ member.attendance_rate|default:0 }}%"></div>
+                                </div>
+                                <span class="text-sm font-medium text-gray-900">{{ member.attendance_rate|default:0 }}%</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right">
+                            <a href="{% url 'membres:detail' member.id %}" class="text-indigo-600 hover:text-indigo-900">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="px-6 py-12 text-center">
+                            <i class="fas fa-users text-gray-300 text-5xl mb-4"></i>
+                            <p class="text-gray-500">Aucun membre dans votre groupe</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <div class="space-y-6">
+        <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 animate-fade-in-up" style="animation-delay: 0.8s">
+            <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
+                <i class="fas fa-birthday-cake text-yellow-500 mr-2"></i>
+                Anniversaires
+            </h3>
+            <div class="space-y-3">
+                {% for birthday in upcoming_birthdays %}
+                <div class="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-yellow-500 rounded-full flex items-center justify-center text-white">
+                            <i class="fas fa-gift"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-semibold text-gray-900">{{ birthday.member.get_full_name }}</p>
+                            <p class="text-xs text-gray-500">{{ birthday.date|date:"d/m" }}</p>
+                        </div>
+                    </div>
+                    <span class="text-xs font-medium text-yellow-600">Dans {{ birthday.days_until }}j</span>
+                </div>
+                {% empty %}
+                <p class="text-sm text-gray-500 text-center py-4">Aucun anniversaire ce mois</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================== -->
+<!-- DASHBOARD MEMBRE SIMPLE -->
+<!-- ========================================== -->
+{% else %}
+
+<div class="bg-gradient-to-r from-purple-600 via-pink-600 to-red-500 rounded-2xl shadow-2xl p-8 mb-8 text-white overflow-hidden relative">
+    <div class="absolute inset-0 bg-black opacity-10"></div>
+    <div class="relative z-10">
+        <div class="flex flex-col md:flex-row items-center justify-between">
+            <div class="mb-4 md:mb-0">
+                <h1 class="text-3xl md:text-4xl font-bold mb-2">Bienvenue, {{ member.first_name }}</h1>
+                <p class="text-white/90 text-lg">Voici votre espace personnel</p>
+            </div>
+            <div>
+                {% if member.photo %}
+                <img src="{{ member.photo.url }}" alt="{{ member.get_full_name }}" class="w-24 h-24 rounded-full border-4 border-white shadow-2xl object-cover">
+                {% else %}
+                <div class="w-24 h-24 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-4xl font-bold border-4 border-white shadow-2xl">
+                    {{ member.first_name.0 }}{{ member.last_name.0 }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+    <div class="lg:col-span-2 bg-gradient-to-br from-indigo-600 to-purple-700 rounded-2xl shadow-2xl p-8 text-white relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32"></div>
+        <div class="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full -ml-24 -mb-24"></div>
+        
+        <div class="relative z-10">
+            <div class="flex items-start justify-between mb-8">
+                <div>
+                    <p class="text-sm text-white/80 mb-1">CARTE DE MEMBRE</p>
+                    <h2 class="text-3xl font-bold">{{ member.get_full_name }}</h2>
+                    <p class="text-white/80 mt-2">{{ member.member_number }}</p>
+                </div>
+                {% if member.photo %}
+                <img src="{{ member.photo.url }}" alt="{{ member.get_full_name }}" class="w-20 h-20 rounded-xl border-2 border-white object-cover">
+                {% else %}
+                <div class="w-20 h-20 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-2xl font-bold">
+                    {{ member.first_name.0 }}{{ member.last_name.0 }}
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div>
+                    <p class="text-xs text-white/70 mb-1">Date de Naissance</p>
+                    <p class="font-semibold">{{ member.birth_date|date:"d/m/Y" }}</p>
+                </div>
+                <div>
+                    <p class="text-xs text-white/70 mb-1">Membre depuis</p>
+                    <p class="font-semibold">{{ member.membership_date|date:"d/m/Y" }}</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center justify-between pt-6 border-t border-white/20">
+                <div class="flex items-center space-x-2">
+                    <div class="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+                    <span class="text-sm font-medium">Statut: Actif</span>
+                </div>
+                {% if member and member.id %}
+                    <a href="{% url 'membres:generate_card' member.id %}" class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white hover:shadow-xl transition-all transform hover:-translate-y-1">
+                        <i class="fas fa-id-card text-3xl mb-3"></i>
+                        <p class="font-semibold">Télécharger Carte</p>
+                        <p class="text-sm text-white/80 mt-1">PDF avec QR Code</p>
+                    </a>
+                    {% else %}
+                    <div class="bg-gradient-to-br from-gray-400 to-gray-500 rounded-xl shadow-lg p-6 text-white cursor-not-allowed">
+                        <i class="fas fa-id-card text-3xl mb-3 opacity-70"></i>
+                        <p class="font-semibold">Carte Indisponible</p>
+                        <p class="text-sm text-white/80 mt-1">Profil membre requis</p>
+                    </div>
+                {% endif %}
+
+            </div>
+        </div>
+    </div>
+    
+    <div class="space-y-6">
+        <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-gray-900">Mes Stats</h3>
+                <i class="fas fa-chart-pie text-indigo-600 text-2xl"></i>
+            </div>
+            <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-600">Présences</span>
+                    <div class="flex items-center">
+                        <div class="w-20 h-2 bg-gray-200 rounded-full mr-2">
+                            <div class="bg-green-500 h-2 rounded-full" style="width: {{ attendance_rate|default:0 }}%"></div>
+                        </div>
+                        <span class="text-sm font-bold text-gray-900">{{ attendance_rate|default:0 }}%</span>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-600">Âge</span>
+                    <span class="text-sm font-bold text-gray-900">{{ member.get_age }} ans</span>
+                </div>
+                {% if member.ministries.count > 0 %}
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-600">Ministères</span>
+                    <span class="text-sm font-bold text-gray-900">{{ member.ministries.count }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl shadow-lg p-6 text-white">
+            <i class="fas fa-trophy text-3xl mb-3"></i>
+            <p class="text-sm font-medium mb-1">Membre depuis</p>
+            <p class="text-2xl font-bold">{{ member_duration|default:0 }} jours</p>
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+    <a href="{% url 'membres:generate_card' member.id %}" class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white hover:shadow-xl transition-all transform hover:-translate-y-1">
+        <i class="fas fa-id-card text-3xl mb-3"></i>
+        <p class="font-semibold">Télécharger Carte</p>
+        <p class="text-sm text-white/80 mt-1">PDF avec QR Code</p>
+    </a>
+    
+    <a href="{% url 'accounts:profile' %}" class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg p-6 text-white hover:shadow-xl transition-all transform hover:-translate-y-1">
+        <i class="fas fa-user-edit text-3xl mb-3"></i>
+        <p class="font-semibold">Modifier Profil</p>
+        <p class="text-sm text-white/80 mt-1">Mettre à jour mes infos</p>
+    </a>
+    
+    <a href="{% url 'accounts:change_password' %}" class="bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg p-6 text-white hover:shadow-xl transition-all transform hover:-translate-y-1">
+        <i class="fas fa-key text-3xl mb-3"></i>
+        <p class="font-semibold">Mot de Passe</p>
+        <p class="text-sm text-white/80 mt-1">Changer mon mot de passe</p>
+    </a>
+    
+    <a href="/" class="bg-gradient-to-br from-orange-500 to-red-500 rounded-xl shadow-lg p-6 text-white hover:shadow-xl transition-all transform hover:-translate-y-1">
+        <i class="fas fa-church text-3xl mb-3"></i>
+        <p class="font-semibold">Site Web</p>
+        <p class="text-sm text-white/80 mt-1">Retour au site</p>
+    </a>
+</div>
+
+{% endif %}
+
+<!-- Modal Export -->
+<div id="exportModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 items-center justify-center">
+    <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-2xl font-bold text-gray-900">Exporter les données</h3>
+            <button onclick="closeExportModal()" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times text-2xl"></i>
+            </button>
+        </div>
+        
+        <p class="text-gray-600 mb-6">Choisissez le format d'export souhaité</p>
+        
+        <div class="space-y-3">
+            <button onclick="exportData('csv')" class="w-full flex items-center justify-between p-4 bg-green-50 hover:bg-green-100 rounded-xl transition-all group">
+                <div class="flex items-center">
+                    <div class="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center mr-4">
+                        <i class="fas fa-file-csv text-white text-xl"></i>
+                    </div>
+                    <div class="text-left">
+                        <p class="font-semibold text-gray-900">Format CSV</p>
+                        <p class="text-sm text-gray-500">Excel, Sheets, Numbers</p>
+                    </div>
+                </div>
+                <i class="fas fa-arrow-right text-green-500 group-hover:translate-x-1 transition-transform"></i>
+            </button>
+            
+            <button onclick="exportData('pdf')" class="w-full flex items-center justify-between p-4 bg-red-50 hover:bg-red-100 rounded-xl transition-all group">
+                <div class="flex items-center">
+                    <div class="w-12 h-12 bg-red-500 rounded-lg flex items-center justify-center mr-4">
+                        <i class="fas fa-file-pdf text-white text-xl"></i>
+                    </div>
+                    <div class="text-left">
+                        <p class="font-semibold text-gray-900">Format PDF</p>
+                        <p class="text-sm text-gray-500">Document imprimable</p>
+                    </div>
+                </div>
+                <i class="fas fa-arrow-right text-red-500 group-hover:translate-x-1 transition-transform"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    {% if user.has_admin_access %}
+    // ===== GRAPHIQUES ADMINISTRATEUR =====
+    
+    const genderData = [
+        {% for stat in gender_stats %}
+        { gender: '{{ stat.gender }}', count: {{ stat.count }} }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ];
+
+    const ageData = {
+        {% for label, count in age_groups.items %}
+        '{{ label }}': {{ count }}{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    };
+
+    // Graphique Genre (Doughnut)
+    const genderCtx = document.getElementById('genderChart');
+    if (genderCtx) {
+        const maleCount = genderData.find(d => d.gender === 'M')?.count || 0;
+        const femaleCount = genderData.find(d => d.gender === 'F')?.count || 0;
+
+        new Chart(genderCtx.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Hommes', 'Femmes'],
+                datasets: [{
+                    data: [maleCount, femaleCount],
+                    backgroundColor: ['rgba(59, 130, 246, 0.8)', 'rgba(236, 72, 153, 0.8)'],
+                    borderColor: ['rgba(59, 130, 246, 1)', 'rgba(236, 72, 153, 1)'],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '70%',
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+    }
+
+    // Graphique Âge (Bar)
+    const ageCtx = document.getElementById('ageChart');
+    if (ageCtx) {
+        new Chart(ageCtx.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: Object.keys(ageData),
+                datasets: [{
+                    label: 'Nombre de membres',
+                    data: Object.values(ageData),
+                    backgroundColor: 'rgba(147, 51, 234, 0.8)',
+                    borderColor: 'rgba(147, 51, 234, 1)',
+                    borderWidth: 2,
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { 
+                        beginAtZero: true,
+                        ticks: { precision: 0 }
+                    }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+    }
+
+    // Graphique Évolution Membres (Line)
+    const membersCtx = document.getElementById('membersChart');
+    if (membersCtx) {
+        new Chart(membersCtx.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: ['Oct', 'Nov', 'Déc', 'Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep'],
+                datasets: [{
+                    label: 'Nombre de membres',
+                    data: [210, 215, 218, 222, 225, 228, 232, 235, 238, 242, 245, {{ total_members }}],
+                    borderColor: 'rgba(34, 197, 94, 1)',
+                    backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: 'rgba(34, 197, 94, 1)',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { 
+                        beginAtZero: false,
+                        ticks: { precision: 0 }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    }
+                }
+            }
+        });
+    }
+
+    {% elif user.has_membres_management_access %}
+    // ===== GRAPHIQUES RESPONSABLE/SECRÉTAIRE =====
+    
+    const genderCtxResp = document.getElementById('genderChartResponsable');
+    if (genderCtxResp) {
+        const maleCount = {{ male_count|default:0 }};
+        const femaleCount = {{ female_count|default:0 }};
+
+        new Chart(genderCtxResp.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Hommes', 'Femmes'],
+                datasets: [{
+                    data: [maleCount, femaleCount],
+                    backgroundColor: ['rgba(59, 130, 246, 0.8)', 'rgba(236, 72, 153, 0.8)'],
+                    borderColor: ['rgba(59, 130, 246, 1)', 'rgba(236, 72, 153, 1)'],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '70%',
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+    }
+    {% endif %}
+
+    // ===== FONCTIONS COMMUNES =====
+    
+    // Export Modal
+    function showExportModal() {
+        document.getElementById('exportModal').classList.remove('hidden');
+    }
+
+    function closeExportModal() {
+        document.getElementById('exportModal').classList.add('hidden');
+    }
+
+    // Export Data
+    function exportData(format) {
+        closeExportModal();
+        
+        // Créer un indicateur de chargement
+        const loader = document.createElement('div');
+        loader.className = 'fixed top-4 right-4 bg-indigo-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center';
+        loader.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Génération en cours...';
+        document.body.appendChild(loader);
+        
+        // Redirection vers l'URL d'export
+        const exportUrl = `{% url 'membres:export' %}?format=${format}`;
+        window.location.href = exportUrl;
+        
+        // Retirer le loader après 3 secondes
+        setTimeout(() => {
+            loader.remove();
+        }, 3000);
+    }
+
+    // Fermer le modal en cliquant à l'extérieur
+    document.getElementById('exportModal')?.addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeExportModal();
+        }
+    });
+
+    // Card Hover Effects
+    document.querySelectorAll('.card-hover').forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-4px)';
+            this.style.transition = 'all 0.3s ease';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+</script>
+
+<style>
+    @keyframes fade-in-up {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .animate-fade-in-up {
+        animation: fade-in-up 0.6s ease-out forwards;
+    }
+
+    .card-hover {
+        transition: all 0.3s ease;
+    }
+
+    .card-hover:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+
+    canvas {
+        max-height: 100%;
+    }
+</style>
+{% endblock %}

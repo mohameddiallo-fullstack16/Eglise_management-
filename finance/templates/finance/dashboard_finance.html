@@ -1,0 +1,275 @@
+{% extends 'members/base.html' %}
+
+
+{% block breadcrumb %}
+<li><a href="{% url 'dashboard' %}" class="hover:text-gray-700"><i class="fas fa-home"></i></a></li>
+<li class="text-gray-400">/</li>
+
+<li class="text-gray-900">Finance Dashboard</li>
+{% endblock %}
+
+{% block page_actions %}
+<a href="{% url 'finance:transaction_add' %}" 
+   class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700">
+    <i class="fas fa-plus mr-2"></i>
+    Nouvelle Transaction
+</a>
+{% endblock %}
+
+{% block content %}
+
+<!-- Statistiques Mensuelles -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-sm font-medium text-gray-600">Revenus du Mois</h3>
+            <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-arrow-up text-green-600"></i>
+            </div>
+        </div>
+        <p class="text-3xl font-bold text-gray-900">{{ monthly_income|floatformat:0 }}</p>
+        <p class="text-sm text-gray-500 mt-1">FCFA</p>
+    </div>
+    
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-sm font-medium text-gray-600">Dépenses du Mois</h3>
+            <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-arrow-down text-red-600"></i>
+            </div>
+        </div>
+        <p class="text-3xl font-bold text-gray-900">{{ monthly_expense|floatformat:0 }}</p>
+        <p class="text-sm text-gray-500 mt-1">FCFA</p>
+    </div>
+    
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-sm font-medium text-gray-600">Solde du Mois</h3>
+            <div class="w-10 h-10 {% if monthly_balance >= 0 %}bg-blue-100{% else %}bg-orange-100{% endif %} rounded-lg flex items-center justify-center">
+                <i class="fas fa-wallet {% if monthly_balance >= 0 %}text-blue-600{% else %}text-orange-600{% endif %}"></i>
+            </div>
+        </div>
+        <p class="text-3xl font-bold {% if monthly_balance >= 0 %}text-blue-600{% else %}text-orange-600{% endif %}">
+            {{ monthly_balance|floatformat:0 }}
+        </p>
+        <p class="text-sm text-gray-500 mt-1">FCFA</p>
+    </div>
+</div>
+
+<!-- Statistiques Annuelles -->
+<div class="bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl shadow-lg p-8 mb-8 text-white">
+    <h3 class="text-xl font-bold mb-6">Résumé Annuel</h3>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div>
+            <p class="text-sm opacity-90 mb-2">Revenus Annuels</p>
+            <p class="text-3xl font-bold">{{ yearly_income|floatformat:0 }} FCFA</p>
+        </div>
+        <div>
+            <p class="text-sm opacity-90 mb-2">Dépenses Annuelles</p>
+            <p class="text-3xl font-bold">{{ yearly_expense|floatformat:0 }} FCFA</p>
+        </div>
+        <div>
+            <p class="text-sm opacity-90 mb-2">Solde Annuel</p>
+            <p class="text-3xl font-bold">{{ yearly_balance|floatformat:0 }} FCFA</p>
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    
+<!-- Graphique d'évolution -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Évolution sur 6 Mois</h3>
+        <div style="height: 300px;">
+            <canvas id="evolutionChart"></canvas>
+        </div>
+    </div>
+    
+    <!-- Top Contributeurs -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Top Contributeurs du Mois</h3>
+        <div class="space-y-4">
+            {% for contributor in top_contributors %}
+            <div class="flex items-center justify-between p-3 rounded-lg bg-gray-50">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold">
+                        {{ forloop.counter }}
+                    </div>
+                    <div>
+                        <p class="text-sm font-semibold text-gray-900">
+                            {{ contributor.member__first_name }} {{ contributor.member__last_name }}
+                        </p>
+                    </div>
+                </div>
+                <span class="text-sm font-bold text-green-600">
+                    {{ contributor.total|floatformat:0 }} FCFA
+                </span>
+            </div>
+            {% empty %}
+            <p class="text-sm text-gray-500 text-center py-4">Aucune contribution ce mois</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Transactions en Attente -->
+{% if pending_transactions %}
+<div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-8">
+    <div class="bg-yellow-50 px-6 py-4 border-b border-yellow-100">
+        <h3 class="text-lg font-semibold text-yellow-800 flex items-center">
+            <i class="fas fa-exclamation-triangle mr-2"></i>
+            Transactions en Attente de Validation
+        </h3>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Montant</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Action</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for transaction in pending_transactions %}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-indigo-600">
+                        {{ transaction.transaction_id }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {{ transaction.date|date:"d/m/Y" }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        {{ transaction.get_transaction_type_display }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="text-sm font-bold {% if transaction.category.category_type == 'income' %}text-green-600{% else %}text-red-600{% endif %}">
+                            {{ transaction.amount|floatformat:0 }} {{ transaction.currency }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <a href="{% url 'finance:transaction_validate' transaction.id %}" 
+                           class="text-green-600 hover:text-green-900 mr-3">
+                            <i class="fas fa-check"></i> Valider
+                        </a>
+                        <a href="{% url 'finance:transaction_detail' transaction.id %}" 
+                           class="text-indigo-600 hover:text-indigo-900">
+                            <i class="fas fa-eye"></i> Voir
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- Budget du Mois -->
+{% if current_budget %}
+<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+    <h3 class="text-lg font-semibold text-gray-900 mb-4">Budget du Mois</h3>
+
+    <div class="space-y-4">
+        <div>
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-sm font-medium text-gray-700">Progression</span>
+                <span class="text-sm font-semibold text-gray-900">
+                    {{ monthly_expense|floatformat:0 }} / {{ current_budget.expected_expense|floatformat:0 }} FCFA
+                </span>
+            </div>
+
+            <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                {% if percentage > 100 %}
+                    <div class="bg-red-500 h-3 rounded-full transition-all" style="width: {{ percentage_capped }}%"></div>
+                {% elif percentage > 70 %}
+                    <div class="bg-yellow-500 h-3 rounded-full transition-all" style="width: {{ percentage_capped }}%"></div>
+                {% else %}
+                    <div class="bg-green-500 h-3 rounded-full transition-all" style="width: {{ percentage_capped }}%"></div>
+                {% endif %}
+            </div>
+
+            <p class="text-xs text-gray-500 mt-2">
+                {% if percentage > 100 %}
+                    <span class="text-red-600 font-semibold">⚠️ Budget dépassé de {{ percentage|floatformat:2|add:"-100" }}%</span>
+                {% elif percentage > 90 %}
+                    <span class="text-yellow-600 font-semibold">⚠️ Attention : {{ percentage|floatformat:2 }}% du budget utilisé</span>
+                {% else %}
+                    <span class="text-green-600">{{ percentage|floatformat:2 }}% du budget utilisé</span>
+                {% endif %}
+            </p>
+
+            <!-- Ligne de debug (enlever quand tout est OK) -->
+            <p class="text-xs text-gray-400 mt-2">DEBUG: monthly_expense={{ monthly_expense }}, expected={{ debug_budget_expected }}, percentage={{ percentage }}</p>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="bg-yellow-50 p-4 rounded">
+    <p class="text-sm text-yellow-800">Aucun budget actif défini pour ce mois.</p>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+    // Données pour le graphique d'évolution
+    const evolutionData = {{ monthly_evolution|safe }};
+    
+    const ctx = document.getElementById('evolutionChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: evolutionData.map(item => item.month),
+            datasets: [
+                {
+                    label: 'Revenus',
+                    data: evolutionData.map(item => item.income),
+                    borderColor: 'rgb(34, 197, 94)',
+                    backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                },
+                {
+                    label: 'Dépenses',
+                    data: evolutionData.map(item => item.expense),
+                    borderColor: 'rgb(239, 68, 68)',
+                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': ' + context.parsed.y.toLocaleString() + ' FCFA';
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString() + ' FCFA';
+                        }
+                    }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

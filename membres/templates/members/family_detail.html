@@ -1,0 +1,70 @@
+{% extends 'members/base.html' %}
+{% load static %}
+
+{% block title %}Détails de la Famille - {{ family.name }}{% endblock %}
+
+{% block breadcrumb %}
+<li><a href="{% url 'dashboard' %}" class="hover:text-gray-700"><i class="fas fa-home"></i></a></li>
+<li class="text-gray-400">/</li>
+<li><a href="{% url 'membres:family_list' %}" class="hover:text-gray-700">Familles</a></li>
+<li class="text-gray-400">/</li>
+<li class="text-gray-900">{{ family.name }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+    <h1 class="text-3xl font-bold text-gray-900 mb-6">Détails de la Famille : {{ family.name }}</h1>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="p-6">
+            <!-- Infos Famille -->
+            <ul class="space-y-2 mb-6">
+                <li class="flex items-center"><strong class="w-40 text-gray-600">Nom :</strong> {{ family.name }}</li>
+                <li class="flex items-center"><strong class="w-40 text-gray-600">Description :</strong> {{ family.description|default:"Aucune description" }}</li>
+                <li class="flex items-center"><strong class="w-40 text-gray-600">Chef de Famille :</strong> {{ family.head.get_full_name|default:"Non assigné" }}</li>
+                <li class="flex items-center"><strong class="w-40 text-gray-600">Statut :</strong> {{ family.status|title }}</li>
+                <li class="flex items-center"><strong class="w-40 text-gray-600">Créée le :</strong> {{ family.created_at|date:"d/m/Y" }}</li>
+                <li class="flex items-center"><strong class="w-40 text-gray-600">Mise à jour :</strong> {{ family.updated_at|date:"d/m/Y" }}</li>
+            </ul>
+
+            <!-- Membres de la famille -->
+            <h5 class="text-xl font-semibold text-gray-900 mb-4">Membres de la famille :</h5>
+            {% if family.members.all %}
+            <div class="grid gap-4">
+                {% for member in family.members.all %}
+                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold mr-4">
+                            {{ member.first_name.0 }}{{ member.last_name.0 }}
+                        </div>
+                        <div>
+                            <p class="font-medium text-gray-900">{{ member.get_full_name }}</p>
+                            <p class="text-sm text-gray-500">{{ member.role|title }}</p>
+                        </div>
+                    </div>
+                    <a href="{% url 'membres:detail' member.id %}" class="inline-flex items-center px-4 py-2 bg-white text-indigo-600 rounded-lg font-semibold hover:bg-white/90 transition-all transform hover:scale-105">
+                        <i class="fas fa-eye mr-2"></i>
+                        Voir
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-gray-500 text-center py-4">Aucun membre enregistré dans cette famille.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="mt-6 flex justify-end space-x-3">
+        <a href="{% url 'membres:family_list' %}" class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+            <i class="fas fa-arrow-left mr-1"></i> Retour
+        </a>
+        <a href="{% url 'membres:family_edit' family.id %}" class="px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700">
+            <i class="fas fa-edit mr-1"></i> Modifier
+        </a>
+        <a href="{% url 'membres:family_delete' family.id %}" class="px-4 py-2 border border-red-300 rounded-lg text-sm font-medium text-red-700 bg-white hover:bg-red-50" onclick="return confirm('Supprimer cette famille ?');">
+            <i class="fas fa-trash mr-1"></i> Supprimer
+        </a>
+    </div>
+</div>
+{% endblock %}
