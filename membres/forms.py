@@ -6,7 +6,7 @@ class MemberForm(forms.ModelForm):
         model = Member
         fields = [
             'first_name', 'last_name', 'gender', 'date_of_birth',
-            'marital_status', 'profession', 'phone', 'email',
+            'marital_status', 'profession','nationalite','domaines','nombres_enfant', 'phone', 'email',
             'address', 'photo', 'baptism_date', 'membership_date',
             'family', 'ministries', 'groups', 'status'
         ]
@@ -30,9 +30,19 @@ class MemberForm(forms.ModelForm):
             'profession': forms.TextInput(attrs={
                 'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500'
             }),
+            'nombres_enfant': forms.TextInput(attrs={
+                'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500'
+            }),
+            'nationalite': forms.TextInput(attrs={
+                'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500'
+            }),
+             'domaines': forms.Select(attrs={
+                'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500'
+            }),
+            
             'phone': forms.TextInput(attrs={
                 'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500',
-                'placeholder': '+227 XX XX XX XX'
+                'placeholder': '+227XXXXXXXX'
             }),
             'email': forms.EmailInput(attrs={
                 'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500'

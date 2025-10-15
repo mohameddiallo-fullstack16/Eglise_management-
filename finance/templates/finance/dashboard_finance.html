@@ -1,5 +1,6 @@
 {% extends 'members/base.html' %}
 
+{% load l10n %}
 
 {% block breadcrumb %}
 <li><a href="{% url 'dashboard' %}" class="hover:text-gray-700"><i class="fas fa-home"></i></a></li>
@@ -27,7 +28,7 @@
                 <i class="fas fa-arrow-up text-green-600"></i>
             </div>
         </div>
-        <p class="text-3xl font-bold text-gray-900">{{ monthly_income|floatformat:0 }}</p>
+        <p class="text-3xl font-bold text-gray-900">{{ monthly_income|floatformat:0|localize }}</p>
         <p class="text-sm text-gray-500 mt-1">FCFA</p>
     </div>
     
@@ -38,7 +39,7 @@
                 <i class="fas fa-arrow-down text-red-600"></i>
             </div>
         </div>
-        <p class="text-3xl font-bold text-gray-900">{{ monthly_expense|floatformat:0 }}</p>
+        <p class="text-3xl font-bold text-gray-900">{{ monthly_expense|floatformat:0|localize }}</p>
         <p class="text-sm text-gray-500 mt-1">FCFA</p>
     </div>
     
@@ -62,15 +63,15 @@
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div>
             <p class="text-sm opacity-90 mb-2">Revenus Annuels</p>
-            <p class="text-3xl font-bold">{{ yearly_income|floatformat:0 }} FCFA</p>
+            <p class="text-3xl font-bold">{{ yearly_income|floatformat:0|localize  }} FCFA</p>
         </div>
         <div>
             <p class="text-sm opacity-90 mb-2">Dépenses Annuelles</p>
-            <p class="text-3xl font-bold">{{ yearly_expense|floatformat:0 }} FCFA</p>
+            <p class="text-3xl font-bold">{{ yearly_expense|floatformat:0|localize }} FCFA</p>
         </div>
         <div>
             <p class="text-sm opacity-90 mb-2">Solde Annuel</p>
-            <p class="text-3xl font-bold">{{ yearly_balance|floatformat:0 }} FCFA</p>
+            <p class="text-3xl font-bold">{{ yearly_balance|floatformat:0|localize }} FCFA</p>
         </div>
     </div>
 </div>
@@ -169,7 +170,7 @@
 
 <!-- Budget du Mois -->
 {% if current_budget %}
-<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6  tracking-wider">
     <h3 class="text-lg font-semibold text-gray-900 mb-4">Budget du Mois</h3>
 
     <div class="space-y-4">

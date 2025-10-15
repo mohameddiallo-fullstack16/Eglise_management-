@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.humanize',
     'tailwind',
     'theme',
     'crispy_forms',
@@ -51,6 +52,8 @@ INSTALLED_APPS = [
     'accounts',
     'finance',
     'membres',
+    'events',
+    'communications',
     
    
 ]
@@ -64,6 +67,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'membres.middleware.ForcePasswordChangeMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
 ]
 
 ROOT_URLCONF = 'apps.urls'
@@ -126,6 +130,10 @@ TIME_ZONE = 'Africa/Niamey'
 USE_I18N = True
 
 USE_TZ = True
+
+USE_L10N = True
+USE_THOUSAND_SEPARATOR = True
+
 
 
 # Static files (CSS, JavaScript, Images)

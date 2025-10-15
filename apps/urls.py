@@ -10,7 +10,9 @@ urlpatterns = [
     path('', RedirectView.as_view(url='/accounts/login/', permanent=False), name='home'),    path('membres/', include('membres.urls')),  # Garde pour les sous-URLs comme generate-card    path('accounts/', include('accounts.urls')),
     path('finance/', include('finance.urls')),
     path('accounts/', include('accounts.urls')),
-    path('dashboard/', dashboard_home, name='dashboard'),  # ← Ajout : /dashboard/ global
+    path('dashboard/', dashboard_home, name='dashboard'),  
+    path('events/', include('events.urls')),
+    #path('communications/', include('communications.urls')),
 ]
 
 if settings.DEBUG:

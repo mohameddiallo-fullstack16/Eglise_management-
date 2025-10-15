@@ -6,7 +6,7 @@ from .models import Member, Ministry, Group, Family, Attendance
 # ----------------------
 @admin.register(Member)
 class MemberAdmin(admin.ModelAdmin):
-    list_display = ('first_name', 'last_name', 'member_id', 'email', 'phone', 'status')
+    list_display = ('first_name', 'last_name', 'member_id', 'email', 'phone', 'status','nationalite','nombres_enfant','domaines')
     list_filter = ('status', 'gender', 'ministries', 'groups')
     search_fields = ('first_name', 'last_name', 'member_id', 'email', 'phone')
     ordering = ('last_name',)

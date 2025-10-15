@@ -111,7 +111,7 @@ class Member(models.Model):
     
     MARITAL_STATUS_CHOICES = [
         ('single', 'Célibataire'),
-        ('married', 'Marié(e)'),
+        ('married', 'Conjoint(e)'),
         ('widowed', 'Veuf/Veuve'),
         ('divorced', 'Divorcé(e)'),
     ]
@@ -154,10 +154,34 @@ class Member(models.Model):
         choices=MARITAL_STATUS_CHOICES,
         verbose_name='État civil'
     )
+    nationalite = models.CharField( 
+        max_length=30,
+        blank=True,
+        null=True
+    )
     profession = models.CharField(
         max_length=100,
         blank=True,
         verbose_name='Profession'
+    )
+    nombres_enfant = models.CharField(
+        max_length=5,
+        blank = True,
+        null=True, 
+    )
+    DOMAINES_CHOICES = [
+        ('education', 'Éducation'),
+        ('sante', 'Santé'),
+        ('finance', 'Finance'),
+        ('informatique', 'Informatique'),
+        ('autre', 'Autre'),
+    ]
+    domaines = models.CharField(
+        max_length=50,
+        choices=DOMAINES_CHOICES,
+        blank=True,
+        null=True,
+        verbose_name="Domaine d'activité"
     )
     
     # Contact
