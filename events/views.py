@@ -3,7 +3,7 @@ import csv
 from datetime import date
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
-from .forms import EventForm, EventProgramForm, EventSubProgramForm, WhatsAppNotificationForm
+from .forms import Event, EventForm, EventProgram, EventSubProgram, WhatsAppNotification,EventProgramForm, WhatsAppNotificationForm
 from urllib import response
 from django.contrib.auth.mixins import UserPassesTestMixin
 from django.http import HttpResponse, JsonResponse
@@ -44,7 +44,7 @@ class Eventlist(listViews):
                 Q(title__icontains=search) | Q(description__icontains=search)
             )
         
-        return queryset.select_related('category', 'organizer', 'department')
+        return queryset.select_related('category', 'organizer')
     
     def get_context_data(self, **kwargs):
             context = super().get_context_data(**kwargs)
@@ -57,23 +57,35 @@ class Eventlist(listViews):
 
 class EventDetailView(DetailView):
     model = Event
-    template_name = 'events/event_detail.html'
+    template_name = 'events/events_detail.html'
     context_object_name = 'event'
     slug_field = 'slug'
     slug_url_kwarg = 'slug'
 
+    def get_queryset(self):
+        # Optimisation globale : prefetch pour relations reverse, select pour forward
+        return Event.objects.prefetch_related(
+            'attendances__member',
+            'attendances__recorded_by',
+            'programs__sub_programs'
+        ).select_related('organizer')  # Ex. si forward 'organizer'
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        event = self.object
-        context['programs'] = event.programs.prefetch_related('sub_programs').all()
-        
-        #statistiques de presence
-        
+        event = self.object  # self.object est bien reconnu
+
+        # Programmes liés (prefetch déjà fait dans queryset)
+        context['programs'] = event.programs.all()
+
+        # Statistiques de présence
         context['attendances_count'] = event.get_attendances_count()
         context['total_expected'] = event.get_total_expected()
-        
-        # verif si utlis est inscrit surla liste 
-        if  self.request.user.is_authenticated:
+
+        # Attendances (corrigé : prefetch_related pour reverse ManyToOne)
+        context['attendances'] = event.attendances.prefetch_related('member', 'recorded_by').all()
+
+        # Vérifier si l'utilisateur est inscrit
+        if self.request.user.is_authenticated:
             try:
                 member = self.request.user.member_profile
                 context['user_attendance'] = EventAttendance.objects.filter(
@@ -82,35 +94,50 @@ class EventDetailView(DetailView):
                 ).first()
             except:
                 context['user_attendance'] = None
-            #"historiq admin seulement qui a acces
+
+        # Historique (admin seulement – corrigé : prefetch si reverse)
         if self.request.user.is_authenticated and self.request.user.has_admin_access:
-                context['history'] = Event.history.select_related('performed_by')[:10]
+            context['history'] = event.history.prefetch_related('performed_by').all()[:10]  # Corrigé pour reverse
+
         return context
 
 
-class EventCreate(LoginRequiredMixin, AdminRequiredMixin, CreateView):
-    model = Event
-    form_class = EventForm
-    template_name ='events/events_create.html'
+
+
+
+@login_required
+def event_manage_view(request, event_slug=None):
+    """Vue pour créer ou modifier un événement (admin only)"""
+    if not request.user.has_admin_access():  # Vérifie admin
+        messages.error(request, "Accès non autorisé.")
+        return redirect('events:event_list')
     
-    def form_valid(self, form):
-        form.instance.created_by = self.request.user
-        form.instance.organizer = self.request.user
-        response = super().form_valid(form)
-        
-        EventHistory.objects.create(
-            event= self.object,
-            action = 'created',
-            description = f"Evenement crée : {self.object.title}",
-            performed_by = self.request.user
-        )
-        messages.success(self.request, f'Evenement "{self.object.title}" créé avec succès.')
-        return response
+    event = get_object_or_404(Event, slug=event_slug) if event_slug else None
+
+    form = EventForm(request.POST or None, request.FILES or None, instance=event)
+    
+    if request.method == 'POST':
+        if form.is_valid():
+            event = form.save(commit=False)
+            event.organizer = request.user
+            event.created_by = request.user
+            event.save()
+            messages.success(request, f"Événement {'modifié' if event_slug else 'créé'} avec succès.")
+            return redirect('events:event_detail', slug=event.slug)
+        else:
+            messages.error(request, "Erreur dans le formulaire.")
+    
+    context = {
+        'form': form,
+        'title': f"{'Modifier' if event_slug else 'Créer'} un événement",
+        'event': event
+    }
+    return render(request, 'events/events_create.html', context)
     
 class EventUpdate(LoginRequiredMixin, AdminRequiredMixin, UpdateView):
     model = Event
     form_class = EventForm
-    template_name ='events/events_form.html'
+    template_name ='events/events_create.html'
 
     def form_valid(self, form):
         response = super().form_valid(form)
@@ -139,40 +166,61 @@ class EventDelete(LoginRequiredMixin, AdminRequiredMixin, DeleteView):
 
 
 @login_required
-def subprogram_manage_view(request,program_pk):
-    if not request.user.has_admin_access:
-        messages.error(request,"Accès non autorisé")
+def program_manage_view(request, event_slug):
+    """Vue pour gérer les programmes d'un événement (liste + ajout)"""
+    if not request.user.has_admin_access():
+        messages.error(request, "Accès non autorisé")
         return redirect('events:event_list')
-    
-    program = get_object_or_404(EventProgram, pk=program_pk)
-    sub_programs= program.sub_programs.all()
+
+    # Récupérer l'événement
+    event = get_object_or_404(Event, slug=event_slug)
+    programs = event.programs.all().order_by('order', 'date', 'start_time')
+
     if request.method == 'POST':
-        
-        if forms.is_valid():
-            sub_programs = forms.save(commit=False)
-            sub_programs.program = program
-            sub_programs.save()
-            messages.success(request, "Activité ajoutée avec succès")
-            return redirect( 'events:event_detail', program_pk=program_pk)
-        
-        
-        sub_programs =  get_object_or_404(EventSubProgram, pk=sub_programs)
-        program = sub_programs.program.pk
-        sub_programs.delete()
-        messages.success(request, 'Activité supprimée ')
-        return redirect('events:subprogram_manage', program_pk=program)
+        form = EventProgramForm(request.POST)
+        if form.is_valid():
+            # Création du programme lié à l'événement
+            program = form.save(commit=False)
+            program.event = event
+            program.save()
+            messages.success(request, "Programme ajouté avec succès.")
+            return redirect('events:program_manage', event_slug=event.slug)
+        else:
+            messages.error(request, "Erreur : veuillez corriger les champs ci-dessous.")
+    else:
+        form = EventProgramForm()
+
+    context = {
+        'event': event,
+        'programs': programs,
+        'form': form,
+    }
+    return render(request, 'events/program_manage.html', context)
+
+@login_required
+def program_delete_view(request, program_pk):
+    """Supprimer un programme (admin seulement)"""
+    if not request.user.has_admin_access():
+        messages.error(request, "Accès non autorisé")
+        return redirect('events:event_list')
+
+    program = get_object_or_404(EventProgram, pk=program_pk)
+    event_slug = program.event.slug  # On récupère le slug de l'événement parent
+    program.delete()
+    messages.success(request, f'Programme "{program.title}" supprimé avec succès.')
+    return redirect('events:program_manage', event_slug=event_slug)
 
 
 @login_required
 def attendance_list_view(request, event_pk):
-    if not request.user.has_admin_access:
+    if not request.user.has_admin_access():
         messages.error(request,"Accès non autorisé")
         return redirect('events:event_list')
     
     event = get_object_or_404(Event, pk=event_pk)
-    attendance = event.attendances.select_related('member','recored_by').all()
+    attendance = event.attendances.select_related('member','recorded_by').all()
     total = attendance.count()
-    present = attendance.filter(status='present').count()
+    present = attendance.filter(is_present=True).count()
     absent = total - present
     context = {
         'event': event,
@@ -259,80 +307,94 @@ def watsapp_notification_view(request, event_pk):
         return redirect('events:event_list')
 
     event = get_object_or_404(Event, pk=event_pk)
+
     if request.method == 'POST':
-       form = WhatsAppNotificationForm(request.POST)
-       if form.is_valid():
-           notifications = form.save(commit=False)
-           notifications.event = event
-           notifications.sent_by = request.user
-           notifications.save()
-           form.save_m2m()
-           total = 0
-           
-           if notifications.recipients_type == 'all':
-               total = Member.objects.filter(phone__isnull=False).count()
-           elif notifications.recipients_type == 'group':
-               for group in notifications.groups.all():
-                   total += group.members.filter(phone__isnull=False).count()
-           elif notifications.recipients_type == 'individual':
-               total = notifications.individual_members.filter(phone__isnull=False).count()
-           notifications.total_recipients = total
-           notifications.save()
-           
-           event.watsapp_notifications_sent = True
-           event.watsapp_sent_at = timezone.now()
-           event.save()
-           
-           EventHistory.objects.create(
-               event=event,
-               action='notification_sent',
-               description=f"Notification WhatsApp envoyée à {total} destinataire(s)",
-               performed_by=request.user
-           )
-           messages.success(request, f'Notification programmée pour {total} destinataire(s).')
-           return redirect('events:event_detail', slug=event.slug)
-       else:
-           default_message = f"""🎉 *{event.title}*
+        form = WhatsAppNotificationForm(request.POST)
+        if form.is_valid():
+            notification = form.save(commit=False)
+            notification.event = event
+            notification.sent_by = request.user
+            notification.save()
+            form.save_m2m()
 
-            📅 Date: {event.start_date.strftime('%d/%m/%Y')}
-            ⏰ Heure: {event.start_time.strftime('%H:%M')}
-            📍 Lieu: {event.location}
+            # Calcul des destinataires
+            total = 0
+            if notification.recipient_type == 'all':
+                total = Member.objects.filter(phone__isnull=False).count()
+            elif notification.recipient_type == 'group':
+                for group in notification.groups.all():
+                    total += group.members.filter(phone__isnull=False).count()
+            elif notification.recipient_type == 'individual':
+                total = notification.individual_members.filter(phone__isnull=False).count()
+            notification.total_recipients = total
+            notification.save()
 
-            {event.short_description}
+            # Historique
+            EventHistory.objects.create(
+                event=event,
+                action='notification_sent',
+                description=f"Notification WhatsApp envoyée à {total} destinataire(s)",
+                performed_by=request.user
+            )
 
-            Nous vous attendons nombreux !
-            """
-           form = WhatsAppNotificationForm(initial={'message': default_message})
-           
-       context = {
-           'event': event,
-           'form': form,
-       }
+            messages.success(request, f'Notification programmée pour {total} destinataire(s).')
+            return redirect('events:event_detail', slug=event.slug)
+
+    else:
+        # Pré-remplir message par défaut
+        default_message = f"""🎉 *{event.title}*
+
+📅 Date: {event.start_date.strftime('%d/%m/%Y')}
+⏰ Heure: {event.start_time.strftime('%H:%M')}
+📍 Lieu: {event.location}
+
+{event.short_description}
+
+Nous vous attendons nombreux !
+"""
+        form = WhatsAppNotificationForm(initial={'message': default_message})
+
+    context = {
+        'event': event,
+        'form': form,
+    }
     return render(request, 'events/whatsapp_notification.html', context)
 
 @login_required
+def event_history_view(request, event_pk):
+    event = get_object_or_404(Event, pk=event_pk)
+    history = event.history.all()  # Utilise le related_name défini sur EventHistory
+
+    context = {
+        'event': event,
+        'history': history,
+    }
+    return render(request, 'events/event_history.html', context)
+
+
 def attendance_export_view(request, event_pk):
-    """Exporter la liste de présence en CSV"""
     if not request.user.has_admin_access():
         messages.error(request, "Accès non autorisé.")
         return redirect('events:event_list')
-    
+
     event = get_object_or_404(Event, pk=event_pk)
-    
+    attendances = EventAttendance.objects.filter(event=event).select_related('member')
+
+    # Création du fichier CSV
     response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = f'attachment; filename="presence_{event.slug}.csv"'
-    
+    response['Content-Disposition'] = f'attachment; filename="attendance_{event.slug}.csv"'
+
     writer = csv.writer(response)
-    writer.writerow(['Nom', 'Prénom', 'Téléphone', 'Email', 'Présent', 'Heure d\'arrivée'])
-    
-    for attendance in event.attendances.select_related('member'):
+    # En-tête
+    writer.writerow(['Nom', 'Prénom', 'Présent', 'Heure d’arrivée', 'Notes'])
+
+    for attendance in attendances:
         writer.writerow([
             attendance.member.last_name,
             attendance.member.first_name,
-            attendance.member.phone or '',
-            attendance.member.email or '',
             'Oui' if attendance.is_present else 'Non',
-            attendance.check_in_time.strftime('%H:%M') if attendance.check_in_time else ''
+            attendance.check_in_time.strftime('%d/%m/%Y %H:%M') if attendance.check_in_time else '',
+            attendance.notes or ''
         ])
-    
+
     return response

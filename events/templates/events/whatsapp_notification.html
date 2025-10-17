@@ -1,0 +1,242 @@
+{% extends 'members/base.html' %}
+
+{% block title %}Notification WhatsApp - {{ event.title }}{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto">
+    
+    <!-- Header -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <div class="flex justify-between items-start">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800">
+                    <i class="fab fa-whatsapp mr-3 text-green-600"></i>
+                    Notification WhatsApp
+                </h1>
+                <p class="text-gray-600 mt-1">{{ event.title }}</p>
+                {% if event.whatsapp_notification_sent %}
+                <div class="mt-2 inline-flex items-center bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">
+                    <i class="fas fa-check-circle mr-2"></i>
+                    Notification déjà envoyée le {{ event.whatsapp_sent_at|date:"d/m/Y à H:i" }}
+                </div>
+                {% endif %}
+            </div>
+            <a href="{% url 'events:event_detail' event.slug %}" 
+               class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300">
+                <i class="fas fa-arrow-left mr-2"></i>Retour
+            </a>
+        </div>
+    </div>
+    
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Formulaire -->
+        <div class="lg:col-span-2">
+            <form method="post" class="bg-white rounded-lg shadow-md p-6">
+                {% csrf_token %}
+                
+                <div class="space-y-6">
+                    
+                    <!-- Type de destinataires -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-3">
+                            <i class="fas fa-users mr-2"></i>Destinataires *
+                        </label>
+                        
+                        <div class="space-y-3">
+                            <label class="flex items-center p-4 border-2 border-gray-300 rounded-lg cursor-pointer hover:border-green-500 has-[:checked]:border-green-600 has-[:checked]:bg-green-50">
+                                <input type="radio" name="recipient_type" value="all" 
+                                       class="w-5 h-5 text-green-600" checked>
+                                <div class="ml-3">
+                                    <p class="font-semibold text-gray-800">Tous les membres</p>
+                                    <p class="text-sm text-gray-600">Envoyer à tous les membres actifs</p>
+                                </div>
+                            </label>
+                            
+                            <label class="flex items-center p-4 border-2 border-gray-300 rounded-lg cursor-pointer hover:border-green-500 has-[:checked]:border-green-600 has-[:checked]:bg-green-50">
+                                <input type="radio" name="recipient_type" value="group" 
+                                       class="w-5 h-5 text-green-600">
+                                <div class="ml-3">
+                                    <p class="font-semibold text-gray-800">Groupes spécifiques</p>
+                                    <p class="text-sm text-gray-600">Sélectionner des groupes WhatsApp</p>
+                                </div>
+                            </label>
+                            
+                            <label class="flex items-center p-4 border-2 border-gray-300 rounded-lg cursor-pointer hover:border-green-500 has-[:checked]:border-green-600 has-[:checked]:bg-green-50">
+                                <input type="radio" name="recipient_type" value="department" 
+                                       class="w-5 h-5 text-green-600">
+                                <div class="ml-3">
+                                    <p class="font-semibold text-gray-800">Départements</p>
+                                    <p class="text-sm text-gray-600">Envoyer aux départements</p>
+                                </div>
+                            </label>
+                            
+                            <label class="flex items-center p-4 border-2 border-gray-300 rounded-lg cursor-pointer hover:border-green-500 has-[:checked]:border-green-600 has-[:checked]:bg-green-50">
+                                <input type="radio" name="recipient_type" value="individual" 
+                                       class="w-5 h-5 text-green-600">
+                                <div class="ml-3">
+                                    <p class="font-semibold text-gray-800">Membres individuels</p>
+                                    <p class="text-sm text-gray-600">Sélectionner des membres</p>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Sélection des groupes (caché par défaut) -->
+                    <div id="groupsField" class="hidden">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Sélectionner les groupes WhatsApp
+                        </label>
+                        {{ form.groups }}
+                        <p class="text-sm text-gray-500 mt-1">Maintenez Ctrl pour sélectionner plusieurs</p>
+                    </div>
+                    
+                    <!-- Sélection des départements (caché par défaut) -->
+                    <div id="departmentsField" class="hidden">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Sélectionner les départements
+                        </label>
+                        {{ form.departments }}
+                    </div>
+                    
+                    <!-- Sélection des membres (caché par défaut) -->
+                    <div id="membersField" class="hidden">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Sélectionner les membres
+                        </label>
+                        {{ form.individual_members }}
+                    </div>
+                    
+                    <!-- Message -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fas fa-comment mr-2"></i>Message *
+                        </label>
+                        {{ form.message }}
+                        <div class="flex justify-between text-sm text-gray-600 mt-2">
+                            <span>
+                                <i class="fas fa-info-circle mr-1"></i>
+                                Utilisez des émojis pour rendre le message plus engageant
+                            </span>
+                            <span id="charCount">0 caractères</span>
+                        </div>
+                    </div>
+                    
+                </div>
+                
+                <!-- Actions -->
+                <div class="mt-8 flex gap-4">
+                    <button type="submit" 
+                            class="flex-1 bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition font-semibold">
+                        <i class="fab fa-whatsapp mr-2"></i>
+                        Envoyer la notification
+                    </button>
+                    <a href="{% url 'events:event_detail' event.slug %}" 
+                       class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">
+                        Annuler
+                    </a>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Aperçu -->
+        <div>
+            <div class="bg-white rounded-lg shadow-md p-6 sticky top-6">
+                <h3 class="text-lg font-bold text-gray-800 mb-4">
+                    <i class="fas fa-eye mr-2 text-blue-600"></i>
+                    Aperçu WhatsApp
+                </h3>
+                
+                <!-- Simulation téléphone -->
+                <div class="bg-gray-100 rounded-lg p-4">
+                    <div class="bg-white rounded-lg shadow-sm p-3 mb-3">
+                        <div class="flex items-center gap-2 mb-2">
+                            <div class="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center text-white font-bold">
+                                É
+                            </div>
+                            <div>
+                                <p class="font-semibold text-sm">Église Manager</p>
+                                <p class="text-xs text-gray-500">Maintenant</p>
+                            </div>
+                        </div>
+                        <div class="bg-green-100 rounded-lg p-3">
+                            <p id="messagePreview" class="text-sm whitespace-pre-line">
+                                {{ form.message.value|default:"Votre message apparaîtra ici..." }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Conseils -->
+                <div class="mt-6 bg-blue-50 rounded-lg p-4">
+                    <h4 class="font-semibold text-gray-800 mb-2">
+                        <i class="fas fa-lightbulb mr-2 text-yellow-500"></i>
+                        Conseils
+                    </h4>
+                    <ul class="text-sm text-gray-700 space-y-2">
+                        <li>✓ Soyez concis et clair</li>
+                        <li>✓ Incluez les infos essentielles</li>
+                        <li>✓ Utilisez des émojis 🎉 📅 ⏰</li>
+                        <li>✓ Ajoutez un appel à l'action</li>
+                    </ul>
+                </div>
+                
+                <!-- Emojis rapides -->
+                <div class="mt-4">
+                    <p class="text-sm font-semibold text-gray-700 mb-2">Émojis rapides :</p>
+                    <div class="grid grid-cols-6 gap-2">
+                        <button type="button" onclick="insertEmoji('🎉')" class="text-2xl hover:bg-gray-100 rounded p-1">🎉</button>
+                        <button type="button" onclick="insertEmoji('📅')" class="text-2xl hover:bg-gray-100 rounded p-1">📅</button>
+                        <button type="button" onclick="insertEmoji('⏰')" class="text-2xl hover:bg-gray-100 rounded p-1">⏰</button>
+                        <button type="button" onclick="insertEmoji('📍')" class="text-2xl hover:bg-gray-100 rounded p-1">📍</button>
+                        <button type="button" onclick="insertEmoji('✨')" class="text-2xl hover:bg-gray-100 rounded p-1">✨</button>
+                        <button type="button" onclick="insertEmoji('🙏')" class="text-2xl hover:bg-gray-100 rounded p-1">🙏</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+</div>
+
+<script>
+// Gestion des types de destinataires
+document.querySelectorAll('input[name="recipient_type"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        document.getElementById('groupsField').classList.add('hidden');
+        document.getElementById('departmentsField').classList.add('hidden');
+        document.getElementById('membersField').classList.add('hidden');
+        
+        if (this.value === 'group') {
+            document.getElementById('groupsField').classList.remove('hidden');
+        } else if (this.value === 'department') {
+            document.getElementById('departmentsField').classList.remove('hidden');
+        } else if (this.value === 'individual') {
+            document.getElementById('membersField').classList.remove('hidden');
+        }
+    });
+});
+
+// Aperçu du message
+const messageField = document.querySelector('textarea[name="message"]');
+messageField.addEventListener('input', function() {
+    document.getElementById('messagePreview').textContent = this.value || 'Votre message apparaîtra ici...';
+    document.getElementById('charCount').textContent = this.value.length + ' caractères';
+});
+
+// Insérer des émojis
+function insertEmoji(emoji) {
+    const textarea = document.querySelector('textarea[name="message"]');
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = textarea.value;
+    textarea.value = text.substring(0, start) + emoji + text.substring(end);
+    textarea.focus();
+    textarea.selectionStart = textarea.selectionEnd = start + emoji.length;
+    textarea.dispatchEvent(new Event('input'));
+}
+
+// Initialiser le compteur
+document.getElementById('charCount').textContent = messageField.value.length + ' caractères';
+</script>
+{% endblock %}

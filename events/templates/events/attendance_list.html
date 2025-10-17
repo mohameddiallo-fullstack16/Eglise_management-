@@ -1,0 +1,200 @@
+{% extends 'members/base.html' %}
+
+{% block title %}Liste de présence - {{ event.title }}{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    
+    <!-- Header -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <div class="flex justify-between items-start">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800">
+                    <i class="fas fa-clipboard-check mr-3 text-green-600"></i>
+                    Liste de présence
+                </h1>
+                <p class="text-gray-600 mt-1">{{ event.title }}</p>
+                <p class="text-sm text-gray-500">{{ event.start_date|date:"d/m/Y" }}</p>
+            </div>
+            
+            <div class="flex gap-3">
+                <a href="{% url 'events:attendance_add_members' event.pk  %}" 
+                   class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                    <i class="fas fa-user-plus mr-2"></i>Ajouter des membres
+                </a>
+                <a href="{% url 'events:attendance_export' event.pk %}" 
+                   class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
+                    <i class="fas fa-download mr-2"></i>Exporter CSV
+                </a>
+                <a href="{% url 'events:event_detail' event.slug %}" 
+                   class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300">
+                    <i class="fas fa-arrow-left mr-2"></i>Retour
+                </a>
+            </div>
+        </div>
+        
+        <!-- Statistiques -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+            <div class="bg-blue-50 p-4 rounded-lg">
+                <p class="text-sm text-gray-600 mb-1">Total attendu</p>
+                <p class="text-3xl font-bold text-blue-600">{{ total }}</p>
+            </div>
+            <div class="bg-green-50 p-4 rounded-lg">
+                <p class="text-sm text-gray-600 mb-1">Présents</p>
+                <p class="text-3xl font-bold text-green-600">{{ present }}</p>
+            </div>
+            <div class="bg-red-50 p-4 rounded-lg">
+                <p class="text-sm text-gray-600 mb-1">Absents</p>
+                <p class="text-3xl font-bold text-red-600">{{ absent }}</p>
+            </div>
+            <div class="bg-purple-50 p-4 rounded-lg">
+                <p class="text-sm text-gray-600 mb-1">Taux de présence</p>
+                <p class="text-3xl font-bold text-purple-600">{{ rate }}%</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recherche -->
+    <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+        <input type="text" id="searchInput" 
+               placeholder="Rechercher un membre..."
+               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+    </div>
+    
+    <!-- Liste de présence -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Membre
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Contact
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Statut
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Heure d'arrivée
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Action
+                    </th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200" id="attendanceList">
+                {% for attendance in attendances %}
+                <tr class="hover:bg-gray-50 attendance-row" data-name="{{ attendance.member.get_full_name|lower }}">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <img class="h-10 w-10 rounded-full" 
+                                 src="{{ attendance.member.user.photo.url|default:'https://ui-avatars.com/api/?name='|add:attendance.member.get_full_name }}" 
+                                 alt="">
+                            <div class="ml-4">
+                                <div class="text-sm font-medium text-gray-900">
+                                    {{ attendance.member.get_full_name }}
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900">{{ attendance.member.email }}</div>
+                        <div class="text-sm text-gray-500">{{ attendance.member.phone|default:"-" }}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap" id="status-{{ attendance.member.pk }}">
+                        {% if attendance.is_present %}
+                        <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                            <i class="fas fa-check-circle mr-1"></i>Présent
+                        </span>
+                        {% else %}
+                        <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                            <i class="fas fa-times-circle mr-1"></i>Absent
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" id="time-{{ attendance.member.pk }}">
+                        {% if attendance.check_in_time %}
+                        {{ attendance.check_in_time|time:"H:i" }}
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <button onclick="toggleAttendance({{ event.pk }}, {{ attendance.member.pk }})" 
+                                id="btn-{{ attendance.member.pk }}"
+                                class="{% if attendance.is_present %}bg-red-100 text-red-700 hover:bg-red-200{% else %}bg-green-100 text-green-700 hover:bg-green-200{% endif %} px-4 py-2 rounded-lg transition">
+                            {% if attendance.is_present %}
+                            <i class="fas fa-times mr-1"></i>Marquer absent
+                            {% else %}
+                            <i class="fas fa-check mr-1"></i>Marquer présent
+                            {% endif %}
+                        </button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="px-6 py-12 text-center text-gray-500">
+                        <i class="fas fa-users-slash text-4xl mb-3"></i>
+                        <p>Aucun membre dans la liste de présence</p>
+                        <a href="{% url 'events:attendance_add_members' event.pk %}" 
+                           class="inline-block mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
+                            <i class="fas fa-user-plus mr-2"></i>Ajouter des membres
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+</div>
+
+<script>
+// Recherche
+document.getElementById('searchInput').addEventListener('input', function(e) {
+    const searchTerm = e.target.value.toLowerCase();
+    document.querySelectorAll('.attendance-row').forEach(row => {
+        const name = row.dataset.name;
+        row.style.display = name.includes(searchTerm) ? '' : 'none';
+    });
+});
+
+// Toggle présence
+function toggleAttendance(eventPk, memberPk) {
+    fetch(`/events/${eventPk}/attendance/${memberPk}/mark/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Mise à jour du statut
+            const statusEl = document.getElementById(`status-${memberPk}`);
+            const timeEl = document.getElementById(`time-${memberPk}`);
+            const btnEl = document.getElementById(`btn-${memberPk}`);
+            
+            if (data.is_present) {
+                statusEl.innerHTML = '<span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800"><i class="fas fa-check-circle mr-1"></i>Présent</span>';
+                const now = new Date();
+                timeEl.textContent = now.toTimeString().slice(0,5);
+                btnEl.className = 'bg-red-100 text-red-700 hover:bg-red-200 px-4 py-2 rounded-lg transition';
+                btnEl.innerHTML = '<i class="fas fa-times mr-1"></i>Marquer absent';
+            } else {
+                statusEl.innerHTML = '<span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800"><i class="fas fa-times-circle mr-1"></i>Absent</span>';
+                timeEl.textContent = '-';
+                btnEl.className = 'bg-green-100 text-green-700 hover:bg-green-200 px-4 py-2 rounded-lg transition';
+                btnEl.innerHTML = '<i class="fas fa-check mr-1"></i>Marquer présent';
+            }
+            
+            // Recharger la page pour mettre à jour les stats
+            setTimeout(() => location.reload(), 500);
+        }
+    })
+    .catch(error => console.error('Erreur:', error));
+}
+</script>
+{% endblock %}

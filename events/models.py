@@ -118,7 +118,7 @@ class Event(models.Model):
     def get_duration_days(self):
         return (self.end_date - self.start_date).days + 1
     
-    def get_attendance_count(self):
+    def get_attendances_count(self):
         return self.attendances.filter(is_present=True).count()
     
     def get_total_expected(self):

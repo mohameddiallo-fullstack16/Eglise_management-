@@ -1,0 +1,157 @@
+{% extends 'members/base.html' %}
+
+{% block title %}Historique - {{ event.title }}{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto">
+    
+    <!-- Header -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <div class="flex justify-between items-start">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800">
+                    <i class="fas fa-history mr-3 text-gray-600"></i>
+                    Historique de l'événement
+                </h1>
+                <p class="text-gray-600 mt-1">{{ event.title }}</p>
+                <p class="text-sm text-gray-500">
+                    Créé le {{ event.created_at|date:"d/m/Y à H:i" }} par {{ event.created_by.get_full_name }}
+                </p>
+            </div>
+            <a href="{% url 'events:event_detail' event.slug %}" 
+               class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300">
+                <i class="fas fa-arrow-left mr-2"></i>Retour
+            </a>
+        </div>
+    </div>
+    
+    <!-- Timeline -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-xl font-bold text-gray-800 mb-6">
+            <i class="fas fa-timeline mr-2"></i>
+            Chronologie des modifications
+        </h2>
+        
+        {% if history %}
+        <div class="relative">
+            <!-- Ligne verticale -->
+            <div class="absolute left-6 top-0 bottom-0 w-0.5 bg-gray-200"></div>
+            
+            <!-- Entrées de l'historique -->
+            <div class="space-y-6">
+                {% for item in history %}
+                <div class="relative pl-16">
+                    <!-- Icône -->
+                    <div class="absolute left-0 top-0 w-12 h-12 rounded-full flex items-center justify-center z-10
+                                {% if item.action == 'created' %}bg-blue-100 text-blue-600
+                                {% elif item.action == 'updated' %}bg-yellow-100 text-yellow-600
+                                {% elif item.action == 'published' %}bg-green-100 text-green-600
+                                {% elif item.action == 'scheduled' %}bg-purple-100 text-purple-600
+                                {% elif item.action == 'cancelled' %}bg-red-100 text-red-600
+                                {% elif item.action == 'completed' %}bg-gray-100 text-gray-600
+                                {% elif item.action == 'notification_sent' %}bg-emerald-100 text-emerald-600
+                                {% else %}bg-gray-100 text-gray-600{% endif %}">
+                        {% if item.action == 'created' %}
+                        <i class="fas fa-plus"></i>
+                        {% elif item.action == 'updated' %}
+                        <i class="fas fa-edit"></i>
+                        {% elif item.action == 'published' %}
+                        <i class="fas fa-check-circle"></i>
+                        {% elif item.action == 'scheduled' %}
+                        <i class="fas fa-clock"></i>
+                        {% elif item.action == 'cancelled' %}
+                        <i class="fas fa-times-circle"></i>
+                        {% elif item.action == 'completed' %}
+                        <i class="fas fa-flag-checkered"></i>
+                        {% elif item.action == 'notification_sent' %}
+                        <i class="fab fa-whatsapp"></i>
+                        {% else %}
+                        <i class="fas fa-info-circle"></i>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Contenu -->
+                    <div class="bg-gray-50 rounded-lg p-4 hover:shadow-md transition">
+                        <div class="flex items-start justify-between mb-2">
+                            <h3 class="font-bold text-gray-800">
+                                {{ item.get_action_display }}
+                            </h3>
+                            <span class="text-xs text-gray-500 whitespace-nowrap ml-4">
+                                {{ item.timestamp|date:"d/m/Y H:i" }}
+                            </span>
+                        </div>
+                        
+                        <p class="text-gray-700 mb-2">{{ item.description }}</p>
+                        
+                        <div class="flex items-center text-sm text-gray-600">
+                            <img src="{{ item.performed_by.photo.url|default:'https://ui-avatars.com/api/?name='|add:item.performed_by.get_full_name }}" 
+                                 alt="" class="w-6 h-6 rounded-full mr-2">
+                            <span>{{ item.performed_by.get_full_name }}</span>
+                            <span class="mx-2">•</span>
+                            <span>{{ item.timestamp|timesince }}</span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% else %}
+        <div class="text-center py-12 text-gray-500">
+            <i class="fas fa-inbox text-6xl mb-4"></i>
+            <h3 class="text-xl font-semibold text-gray-700 mb-2">Aucun historique</h3>
+            <p>L'historique des modifications apparaîtra ici.</p>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Statistiques -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600 mb-1">Modifications</p>
+                    <p class="text-3xl font-bold text-gray-800">
+                        {{ history.count }}
+                    </p>
+                </div>
+                <div class="bg-blue-100 rounded-full p-4">
+                    <i class="fas fa-edit text-blue-600 text-2xl"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600 mb-1">Dernière modification</p>
+                    <p class="text-lg font-bold text-gray-800">
+                        {% if history %}
+                        {{ history.first.timestamp|timesince }}
+                        {% else %}
+                        Aucune
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="bg-yellow-100 rounded-full p-4">
+                    <i class="fas fa-clock text-yellow-600 text-2xl"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600 mb-1">Statut actuel</p>
+                    <p class="text-lg font-bold text-gray-800">
+                        {{ event.get_status_display }}
+                    </p>
+                </div>
+                <div class="{% if event.status == 'published' %}bg-green-100{% elif event.status == 'scheduled' %}bg-purple-100{% elif event.status == 'cancelled' %}bg-red-100{% else %}bg-gray-100{% endif %} rounded-full p-4">
+                    <i class="fas fa-flag {% if event.status == 'published' %}text-green-600{% elif event.status == 'scheduled' %}text-purple-600{% elif event.status == 'cancelled' %}text-red-600{% else %}text-gray-600{% endif %} text-2xl"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+</div>
+{% endblock %}

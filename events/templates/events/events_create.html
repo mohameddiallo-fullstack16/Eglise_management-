@@ -1,0 +1,197 @@
+{% extends 'members/base.html' %}
+
+{% block title %}{{ title }}{% endblock %}
+{% load widget_tweaks %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto p-6">
+    <!-- Header -->
+    <div class="bg-white rounded-xl shadow-md p-6 mb-6 border border-gray-200">
+        <h1 class="text-3xl font-bold text-gray-900 flex items-center">
+            <i class="fas fa-calendar-plus mr-3 text-indigo-600" style="color: #4F46E5;"></i>
+            {{ title }}
+        </h1>
+        <p class="text-gray-600 mt-2">Remplissez les informations de l'événement selon la charte de l'Église.</p>
+    </div>
+
+    <!-- Formulaire -->
+    <form method="post" enctype="multipart/form-data" class="bg-white rounded-xl shadow-md p-6 border border-gray-200 space-y-6">
+        {% csrf_token %}
+
+        <!-- Erreurs globales -->
+        {% if form.non_field_errors %}
+        <div class="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-lg">
+            {% for error in form.non_field_errors %}
+                <p class="text-sm">{{ error }}</p>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Informations de base -->
+        <div class="border-b pb-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                <i class="fas fa-info-circle mr-2 text-indigo-600"></i> Informations de base
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Titre -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Titre de l'événement *</label>
+                    {{ form.title|add_class:"w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" }}
+                    {% if form.title.errors %}<p class="text-red-600 text-sm mt-1">{{ form.title.errors.0 }}</p>{% endif %}
+                </div>
+                <!-- Catégorie -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Catégorie</label>
+                    {{ form.category|add_class:"w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" }}
+                </div>
+                <!-- Statut -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Statut *</label>
+                    {{ form.status|add_class:"w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" }}
+                </div>
+                <!-- Organizer -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Organisateur *</label>
+                    <select name="organizer" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        {% for user in form.fields.organizer.queryset %}
+                            <option value="{{ user.id }}" {% if form.instance.organizer == user %}selected{% endif %}>{{ user.get_full_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <!-- Descriptions -->
+            <div class="mt-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Description complète *</label>
+                {{ form.description|add_class:"w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 h-32" }}
+                {% if form.description.errors %}<p class="text-red-600 text-sm mt-1">{{ form.description.errors.0 }}</p>{% endif %}
+            </div>
+            <div class="mt-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Description courte</label>
+                {{ form.short_description|add_class:"w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" }}
+                <p class="text-sm text-gray-500 mt-1">Max 300 caractères</p>
+            </div>
+        </div>
+
+        <!-- Images -->
+        <div class="border-b pb-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                <i class="fas fa-image mr-2 text-purple-600" style="color: #10B981;"></i> Images
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Image de couverture</label>
+                    {{ form.cover_image|add_class:"w-full px-3 py-2 border border-gray-300 rounded-lg" }}
+                    <p class="text-sm text-gray-500 mt-1">Taille recommandée: 1200x600px</p>
+                    {% if form.instance.cover_image %}
+                    <img src="{{ form.instance.cover_image.url }}" class="mt-2 w-full h-32 object-cover rounded-lg">
+                    {% endif %}
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Miniature</label>
+                    {{ form.thumbnail|add_class:"w-full px-3 py-2 border border-gray-300 rounded-lg" }}
+                    <p class="text-sm text-gray-500 mt-1">Taille recommandée: 400x400px</p>
+                    {% if form.instance.thumbnail %}
+                    <img src="{{ form.instance.thumbnail.url }}" class="mt-2 w-32 h-32 object-cover rounded-lg">
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Dates et heures -->
+        <div class="border-b pb-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                <i class="fas fa-calendar mr-2 text-green-600" style="color: #10B981;"></i> Dates et heures
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Date de début *</label>
+                    {{ form.start_date|add_class:"w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" }}
+                    {% if form.start_date.errors %}<p class="text-red-600 text-sm mt-1">{{ form.start_date.errors.0 }}</p>{% endif %}
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Heure de début *</label>
+                    {{ form.start_time|add_class:"w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" }}
+                    {% if form.start_time.errors %}<p class="text-red-600 text-sm mt-1">{{ form.start_time.errors.0 }}</p>{% endif %}
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Date de fin *</label>
+                    {{ form.end_date|add_class:"w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" }}
+                    {% if form.end_date.errors %}<p class="text-red-600 text-sm mt-1">{{ form.end_date.errors.0 }}</p>{% endif %}
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Heure de fin *</label>
+                    {{ form.end_time|add_class:"w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" }}
+                    {% if form.end_time.errors %}<p class="text-red-600 text-sm mt-1">{{ form.end_time.errors.0 }}</p>{% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Lieu -->
+        <div class="border-b pb-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                <i class="fas fa-map-marker-alt mr-2 text-red-600"></i> Lieu
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Lieu</label>
+                    {{ form.location|add_class:"w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" }}
+                    {% if form.location.errors %}<p class="text-red-600 text-sm mt-1">{{ form.location.errors.0 }}</p>{% endif %}
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Adresse complète</label>
+                    <input type="text" name="adress" value="{{ form.instance.adress|default:'' }}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+            </div>
+        </div>
+
+        <!-- WhatsApp Notifications -->
+        <div class="border-b pb-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                <i class="fas fa-whatsapp mr-2 text-green-600" style="color: #10B981;"></i> Notifications WhatsApp
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Notifications envoyées</label>
+                    {{ form.watsapp_notifications_sent|add_class:"w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" }}
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Date d'envoi</label>
+                    {{ form.watsapp_sent_at|add_class:"w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex gap-4">
+            <button type="submit" class="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-lg hover:from-indigo-700 hover:to-purple-700 transition font-semibold">
+                <i class="fas fa-save mr-2"></i>
+               {% if form.instance.pk %}
+                    Enregistrer les modifications
+                {% else %}
+                    Créer l'événement
+                {% endif %}
+
+            </button>
+            <a href="{% if form.instance.pk %}{% url 'events:event_detail' form.instance.slug %}{% else %}{% url 'events:event_list' %}{% endif %}" 
+               class="flex-1 text-center bg-gray-200 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-300 transition">
+                <i class="fas fa-times mr-2"></i>Annuler
+            </a>
+        </div>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const startDate = document.querySelector('input[name="start_date"]');
+    const endDate = document.querySelector('input[name="end_date"]');
+    
+    form.addEventListener('submit', function(e) {
+        if (startDate.value && endDate.value && new Date(endDate.value) < new Date(startDate.value)) {
+            e.preventDefault();
+            alert('La date de fin doit être après la date de début.');
+        }
+    });
+});
+</script>
+{% endblock %}
